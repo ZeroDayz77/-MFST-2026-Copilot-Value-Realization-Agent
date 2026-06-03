@@ -1,0 +1,105 @@
+{
+	"schema_version": "v2.4",
+	"name_for_human": "Copilot Value Analysis",
+	"namespace": "CopilotValueAnalysis",
+	"description_for_human": "Analyze Copilot usage, seat data, and spend to surface ROI insights.",
+	"description_for_model": "Use this plugin when the user provides pasted text, CSV-style content, spreadsheet exports, or document summaries containing Copilot usage, seats, spend, adoption, or ROI-related data. The plugin helps extract and structure the data for analysis and recommendation generation.",
+	"capabilities": {
+		"conversation_starters": [
+			{
+				"title": "Analyze a usage export",
+				"text": "Analyze this Copilot usage export and tell me whether the company is getting value from it."
+			}
+		]
+	},
+	"functions": [
+		{
+			"name": "analyze_copilot_value",
+			"description": "Analyze Copilot usage, seats, and spend data from text or document extracts and return a structured value assessment.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"source_text": {
+						"type": "string",
+						"description": "Extracted text or spreadsheet contents containing usage, seats, and spend data."
+					},
+					"company_name": {
+						"type": "string",
+						"description": "Optional company name to label the analysis."
+					},
+					"source_type": {
+						"type": "string",
+						"description": "The source format of the input data.",
+						"enum": ["text", "document", "spreadsheet", "csv", "other"]
+					}
+				},
+				"required": ["source_text"]
+			},
+			"returns": {
+				"type": "string",
+				"description": "A structured analysis payload containing metrics, insights, risks, and recommendations."
+			},
+			"states": {
+				"reasoning": {
+					"description": "This function analyzes Copilot usage and spend data to help identify ROI and adoption patterns.",
+					"instructions": [
+						"Use the provided source_text as the only source of business facts.",
+						"Extract seats, usage, spend, and time-based signals when present.",
+						"If the input is incomplete, return the missing fields instead of guessing."
+					]
+				},
+				"responding": {
+					"description": "Return the analysis in a business-friendly structure that can be summarized by the agent.",
+					"instructions": [
+						"Summarize the analysis as a scorecard, insights, gaps, and recommendations.",
+						"Do not invent metrics or conclusions that are not supported by the input."
+					]
+				}
+			},
+			"capabilities": {
+				"security_info": {
+					"data_handling": ["GetPrivateData", "DataTransform"]
+				}
+			}
+		}
+	],
+	"runtimes": [
+		{
+			"type": "RemoteMCPServer",
+			"auth": {
+				"type": "None"
+			},
+			"run_for_functions": ["analyze_copilot_value"],
+			"spec": {
+				"url": "https://example.com/mcp",
+				"mcp_tool_description": {
+					"tools": [
+						{
+							"name": "analyze_copilot_value",
+							"description": "Analyze Copilot usage, seats, and spend data from text or document extracts.",
+							"inputSchema": {
+								"type": "object",
+								"properties": {
+									"source_text": {
+										"type": "string",
+										"description": "Extracted text or spreadsheet contents containing usage, seats, and spend data."
+									},
+									"company_name": {
+										"type": "string",
+										"description": "Optional company name to label the analysis."
+									},
+									"source_type": {
+										"type": "string",
+										"description": "The source format of the input data.",
+										"enum": ["text", "document", "spreadsheet", "csv", "other"]
+									}
+								},
+								"required": ["source_text"]
+							}
+						}
+					]
+				}
+			}
+		}
+	]
+}

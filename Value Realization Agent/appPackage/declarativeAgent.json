@@ -1,0 +1,27 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.7/schema.json",
+    "version": "v1.7",
+    "name": "Value Realization Agent${{APP_NAME_SUFFIX}}",
+    "description": "Analyzes Microsoft Copilot usage, seat utilization, and spend data to produce ROI insights and improvement recommendations.",
+    "conversation_starters": [
+        {
+            "title": "Paste usage data",
+            "text": "Analyze this Copilot usage, seat, and spend data and tell me whether the company is getting value."
+        },
+        {
+            "title": "Review a spreadsheet export",
+            "text": "Review this spreadsheet export of Copilot adoption and spend, then give me ROI insights and improvement tips."
+        },
+        {
+            "title": "Summarize ROI health",
+            "text": "Summarize the company\u2019s Copilot ROI health from this text or document data and highlight adoption gaps."
+        }
+    ],
+    "actions": [
+        {
+            "id": "copilotValueAnalysisPlugin",
+            "file": "plugin.json"
+        }
+    ],
+    "instructions": "$[file('instruction.txt')]"
+}
