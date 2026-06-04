@@ -1,0 +1,74 @@
+{
+	"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+	"type": "AdaptiveCard",
+	"version": "1.5",
+	"body": [
+		{
+			"type": "TextBlock",
+			"text": "Copilot Value Scorecard",
+			"weight": "Bolder",
+			"size": "Medium"
+		},
+		{
+			"type": "ColumnSet",
+			"columns": [
+				{
+					"type": "Column",
+					"width": "auto",
+					"items": [
+						{ "type": "TextBlock", "text": "Score", "weight": "Bolder" },
+						{
+							"type": "TextBlock",
+							"text": "${score}",
+							"size": "Large",
+							"weight": "Bolder"
+						}
+					]
+				},
+				{
+					"type": "Column",
+					"width": "stretch",
+					"items": [
+						{
+							"type": "TextBlock",
+							"text": "Active Users: ${active_users}",
+							"wrap": true
+						},
+						{
+							"type": "TextBlock",
+							"text": "Seats Purchased: ${seats_purchased}",
+							"wrap": true
+						},
+						{
+							"type": "TextBlock",
+							"text": "Spend (period): ${spend}",
+							"wrap": true
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "TextBlock",
+			"text": "Key Insights",
+			"weight": "Bolder",
+			"separator": true
+		},
+		{
+			"type": "TextBlock",
+			"text": "${insights}",
+			"wrap": true
+		},
+		{
+			"type": "TextBlock",
+			"text": "Recommendations",
+			"weight": "Bolder",
+			"separator": true
+		},
+		{
+			"type": "TextBlock",
+			"text": "${recommendations}",
+			"wrap": true
+		}
+	]
+}

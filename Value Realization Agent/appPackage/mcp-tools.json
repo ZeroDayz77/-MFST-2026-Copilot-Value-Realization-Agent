@@ -1,0 +1,27 @@
+{
+	"tools": [
+		{
+			"name": "analyze_copilot_value",
+			"description": "Analyze Copilot usage, seats, and spend data from text or document extracts.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"source_text": {
+						"type": "string",
+						"description": "Extracted text or spreadsheet contents containing usage, seats, and spend data."
+					},
+					"company_name": {
+						"type": "string",
+						"description": "Optional company name to label the analysis."
+					},
+					"source_type": {
+						"type": "string",
+						"description": "The source format of the input data.",
+						"enum": ["text", "document", "spreadsheet", "csv", "other"]
+					}
+				},
+				"required": ["source_text"]
+			}
+		}
+	]
+}
