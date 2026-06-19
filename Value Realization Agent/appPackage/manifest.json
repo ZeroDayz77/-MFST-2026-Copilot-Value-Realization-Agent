@@ -18,8 +18,8 @@
 		"full": "Value Realization Agent"
 	},
 	"description": {
-		"short": "Analyzes Copilot usage and spend to estimate ROI and utilization health.",
-		"full": "An agent that analyzes Copilot usage, seat data, and spend from text or spreadsheet-like input to surface ROI insights, utilization gaps, and recommendations for better adoption."
+		"short": "Instruction-only agent for doubly robust causal estimation guidance.",
+		"full": "An instruction-driven agent that infers treatment, outcome, and covariates from user-provided data, validates causal-analysis requirements, proposes a doubly robust config payload, and explains treatment effect outputs when provided."
 	},
 	"accentColor": "#FFFFFF",
 	"supportsChannelFeatures": "tier1",
