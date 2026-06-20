@@ -2,9 +2,16 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 
 const app = express();
 app.use(bodyParser.json({ limit: '2mb' }));
+
+// Python serving layer (Models/predict.py) that loads the trained models.
+const PYTHON_BIN = process.env.PYTHON_BIN || 'python';
+const PREDICT_SCRIPT =
+  process.env.PREDICT_SCRIPT ||
+  path.join(__dirname, '..', '..', 'Models', 'predict.py');
 
 // Load tool descriptors from appPackage/mcp-tools.json if available
 let toolsDescriptor = null;
@@ -20,6 +27,56 @@ try {
       inputSchema: { type: 'object' }
     }
   ];
+}
+
+function runPrediction(args, res) {
+  let stdout = '';
+  let stderr = '';
+
+  let child;
+  try {
+    child = spawn(PYTHON_BIN, [PREDICT_SCRIPT], { stdio: ['pipe', 'pipe', 'pipe'] });
+  } catch (e) {
+    res.status(500).json({ error: `Failed to start prediction process: ${e?.message || e}` });
+    return;
+  }
+
+  const timeout = setTimeout(() => {
+    child.kill();
+    res.status(504).json({ error: 'Prediction timed out.' });
+  }, 30000);
+
+  child.on('error', (e) => {
+    clearTimeout(timeout);
+    res.status(500).json({ error: `Prediction process error: ${e?.message || e}` });
+  });
+
+  child.stdout.on('data', (d) => { stdout += d.toString(); });
+  child.stderr.on('data', (d) => { stderr += d.toString(); });
+
+  child.on('close', (code) => {
+    clearTimeout(timeout);
+    let parsed;
+    try {
+      parsed = JSON.parse(stdout);
+    } catch (e) {
+      res.status(500).json({
+        error: 'Could not parse prediction output.',
+        details: stderr || stdout || String(e)
+      });
+      return;
+    }
+
+    if (code !== 0 || parsed.error) {
+      res.status(400).json({ error: parsed.error || `Prediction exited with code ${code}`, details: stderr || undefined });
+      return;
+    }
+
+    res.json({ result: parsed });
+  });
+
+  child.stdin.write(JSON.stringify(args || {}));
+  child.stdin.end();
 }
 
 app.post('/mcp', (req, res) => {
@@ -66,6 +123,11 @@ app.post('/mcp', (req, res) => {
       };
 
       res.json({ result });
+      return;
+    }
+
+    if (name === 'predict_copilot_value') {
+      runPrediction(args, res);
       return;
     }
 

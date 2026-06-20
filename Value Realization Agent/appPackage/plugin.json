@@ -61,6 +61,91 @@
 					"data_handling": ["GetPrivateData", "DataTransform"]
 				}
 			}
+		},
+		{
+			"name": "predict_copilot_value",
+			"description": "Run the trained ROI, waste, and expansion models on a company or department's Copilot numbers and return exact, reproducible figures plus a first-principles finance breakdown.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"licensed_users": {
+						"type": "number",
+						"description": "Number of users assigned a Copilot license."
+					},
+					"active_users": {
+						"type": "number",
+						"description": "Number of users actively using Copilot."
+					},
+					"adoption_rate": {
+						"type": "number",
+						"description": "Active users divided by licensed users (0-1). Derived when omitted."
+					},
+					"app_mix_score": {
+						"type": "number",
+						"description": "Breadth-of-usage score across Word, Outlook, Teams, and Excel actions."
+					},
+					"avg_hours_saved_per_user_month": {
+						"type": "number",
+						"description": "Average hours saved per active user per month."
+					},
+					"loaded_hourly_cost_usd": {
+						"type": "number",
+						"description": "Blended loaded hourly labor cost (salary plus overhead)."
+					},
+					"license_cost_month_usd": {
+						"type": "number",
+						"description": "Total monthly Copilot license spend in USD."
+					},
+					"company_size": {
+						"type": "number",
+						"description": "Total employee headcount of the company."
+					},
+					"enablement_cost_month_usd": {
+						"type": "number",
+						"description": "Optional monthly enablement/training cost in USD. Defaults to 0."
+					},
+					"roi_percent_month": {
+						"type": "number",
+						"description": "Optional actual monthly ROI %. When omitted, the ROI model prediction is chained into the expansion model."
+					}
+				},
+				"required": [
+					"licensed_users",
+					"active_users",
+					"app_mix_score",
+					"avg_hours_saved_per_user_month",
+					"loaded_hourly_cost_usd",
+					"license_cost_month_usd",
+					"company_size"
+				]
+			},
+			"returns": {
+				"type": "string",
+				"description": "A JSON payload with roi, waste, expansion (probability and recommendation), and a first-principles finance_model breakdown."
+			},
+			"states": {
+				"reasoning": {
+					"description": "This function executes the trained regression and classification models to produce precise ROI, waste, and expansion numbers.",
+					"instructions": [
+						"Map the user's data to the numeric inputs; derive adoption_rate from active and licensed users when it is not given.",
+						"Prefer this function when the user wants an exact, reproducible figure or asks to run the model.",
+						"If required numeric inputs are missing, ask for them instead of guessing."
+					]
+				},
+				"responding": {
+					"description": "Return the model outputs so the agent can fold them into a business-friendly narrative.",
+					"instructions": [
+						"Report ROI %, wasted-license cost, and the expansion probability with its recommendation.",
+						"Reconcile the model ROI with the first-principles finance_model and flag any material gap.",
+						"Treat outputs as directional because the models are trained on synthetic data."
+					]
+				}
+			},
+			"capabilities": {
+				"security_info": {
+					"data_handling": ["GetPrivateData", "DataTransform"]
+				}
+			}
 		}
 	],
 	"runtimes": [
@@ -69,7 +154,7 @@
 			"auth": {
 				"type": "None"
 			},
-			"run_for_functions": ["analyze_copilot_value"],
+			"run_for_functions": ["analyze_copilot_value", "predict_copilot_value"],
 			"spec": {
 				"url": "http://localhost:3001/mcp",
 				"mcp_tool_description": {

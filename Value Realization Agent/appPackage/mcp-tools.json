@@ -22,6 +22,64 @@
 				},
 				"required": ["source_text"]
 			}
+		},
+		{
+			"name": "predict_copilot_value",
+			"description": "Run the trained ROI, waste, and expansion models on a company or department's Copilot numbers. Returns exact, reproducible ROI %, wasted-license cost, an expansion-recommendation probability, and a first-principles finance breakdown. Use this to confirm precise, CFO-facing figures.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"licensed_users": {
+						"type": "number",
+						"description": "Number of users assigned a Copilot license."
+					},
+					"active_users": {
+						"type": "number",
+						"description": "Number of users actively using Copilot."
+					},
+					"adoption_rate": {
+						"type": "number",
+						"description": "Active users divided by licensed users (0-1). Derived from licensed/active users when omitted."
+					},
+					"app_mix_score": {
+						"type": "number",
+						"description": "Breadth-of-usage score across Word, Outlook, Teams, and Excel actions."
+					},
+					"avg_hours_saved_per_user_month": {
+						"type": "number",
+						"description": "Average hours saved per active user per month."
+					},
+					"loaded_hourly_cost_usd": {
+						"type": "number",
+						"description": "Blended loaded hourly labor cost (salary plus overhead)."
+					},
+					"license_cost_month_usd": {
+						"type": "number",
+						"description": "Total monthly Copilot license spend in USD."
+					},
+					"company_size": {
+						"type": "number",
+						"description": "Total employee headcount of the company."
+					},
+					"enablement_cost_month_usd": {
+						"type": "number",
+						"description": "Optional monthly enablement/training cost in USD. Defaults to 0."
+					},
+					"roi_percent_month": {
+						"type": "number",
+						"description": "Optional actual monthly ROI %. When omitted, the ROI model's prediction is chained into the expansion model."
+					}
+				},
+				"required": [
+					"licensed_users",
+					"active_users",
+					"app_mix_score",
+					"avg_hours_saved_per_user_month",
+					"loaded_hourly_cost_usd",
+					"license_cost_month_usd",
+					"company_size"
+				]
+			}
 		}
 	]
 }
