@@ -10,6 +10,13 @@
 			"size": "Medium"
 		},
 		{
+			"type": "TextBlock",
+			"text": "${company}",
+			"isSubtle": true,
+			"spacing": "None",
+			"wrap": true
+		},
+		{
 			"type": "ColumnSet",
 			"columns": [
 				{

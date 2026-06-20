@@ -1,0 +1,112 @@
+{
+	"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+	"type": "AdaptiveCard",
+	"version": "1.5",
+	"body": [
+		{
+			"type": "ColumnSet",
+			"columns": [
+				{
+					"type": "Column",
+					"width": "stretch",
+					"items": [
+						{
+							"type": "TextBlock",
+							"text": "${title}",
+							"weight": "Bolder",
+							"size": "Large",
+							"wrap": true
+						}
+					]
+				},
+				{
+					"type": "Column",
+					"width": "auto",
+					"verticalContentAlignment": "Center",
+					"items": [
+						{
+							"type": "TextBlock",
+							"text": "ROI Health: ${health}",
+							"weight": "Bolder",
+							"color": "${health_color}",
+							"horizontalAlignment": "Right",
+							"wrap": true
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "TextBlock",
+			"text": "${roi_percent}",
+			"size": "ExtraLarge",
+			"weight": "Bolder",
+			"color": "${health_color}",
+			"spacing": "Small"
+		},
+		{
+			"type": "TextBlock",
+			"text": "Monthly ROI - ${roi_caption} - ${model_roi_percent}",
+			"isSubtle": true,
+			"wrap": true,
+			"spacing": "None"
+		},
+		{
+			"type": "TextBlock",
+			"text": "Monthly Value",
+			"weight": "Bolder",
+			"separator": true
+		},
+		{
+			"type": "FactSet",
+			"facts": [
+				{ "title": "Net value", "value": "${net_value}" },
+				{ "title": "Gross value", "value": "${gross_value}" },
+				{ "title": "License cost", "value": "${license_cost}" },
+				{ "title": "Wasted licenses", "value": "${waste_cost}" }
+			]
+		},
+		{
+			"type": "TextBlock",
+			"text": "Adoption",
+			"weight": "Bolder",
+			"separator": true
+		},
+		{
+			"type": "FactSet",
+			"facts": [
+				{ "title": "Adoption", "value": "${adoption}" },
+				{ "title": "Hours saved", "value": "${hours_saved}" }
+			]
+		},
+		{
+			"type": "TextBlock",
+			"text": "Expansion",
+			"weight": "Bolder",
+			"separator": true
+		},
+		{
+			"type": "TextBlock",
+			"text": "${expansion}",
+			"weight": "Bolder",
+			"color": "${expansion_color}",
+			"wrap": true,
+			"spacing": "None"
+		},
+		{
+			"type": "TextBlock",
+			"text": "${insight}",
+			"wrap": true,
+			"isSubtle": true,
+			"separator": true
+		},
+		{
+			"type": "TextBlock",
+			"text": "${note}",
+			"wrap": true,
+			"isSubtle": true,
+			"size": "Small",
+			"spacing": "Small"
+		}
+	]
+}

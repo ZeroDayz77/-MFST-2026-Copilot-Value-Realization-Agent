@@ -113,13 +113,15 @@ app.post('/mcp', (req, res) => {
       const score = seats && active_users ? Math.round((active_users / seats) * 100) : 50;
 
       const result = {
-        company: company,
-        score: score,
-        seats_purchased: seats,
-        active_users: active_users,
-        spend: spend,
-        insights: `Detected seats=${seats || 'n/a'}, active_users=${active_users || 'n/a'}, spend=${spend || 'n/a'}`,
-        recommendations: 'Increase training for low-adoption teams; consider seat reallocation.'
+        scorecard: {
+          company: company,
+          score: score,
+          seats_purchased: seats,
+          active_users: active_users,
+          spend: spend,
+          insights: `Detected seats=${seats || 'n/a'}, active_users=${active_users || 'n/a'}, spend=${spend || 'n/a'}`,
+          recommendations: 'Increase training for low-adoption teams; consider seat reallocation.'
+        }
       };
 
       res.json({ result });

@@ -138,6 +138,69 @@ def finance_value_model(inputs):
     }
 
 
+def _money(value):
+    if value is None:
+        return "n/a"
+    if value < 0:
+        return "-${:,.0f}".format(abs(value))
+    return "${:,.0f}".format(value)
+
+
+def _pct(value, decimals=0):
+    if value is None:
+        return "n/a"
+    return "{:.{d}f}%".format(value, d=decimals)
+
+
+def build_card(company_name, inputs, roi_pred, waste_pred, exp_prob, analytic):
+    """Display-ready fields for the board-room one-pager Adaptive Card.
+
+    The headline ROI is the first-principles finance figure (explainable and
+    robust); the model ROI is shown alongside as a pattern-based cross-check.
+    """
+    analytic_roi = analytic["roi_percent_month"]
+    if analytic_roi is None:
+        health, health_color = "Unknown", "Warning"
+    elif analytic_roi >= 100:
+        health, health_color = "Strong", "Good"
+    elif analytic_roi >= 0:
+        health, health_color = "Moderate", "Warning"
+    else:
+        health, health_color = "Weak", "Attention"
+
+    recommend = exp_prob >= 0.5
+    verdict = "Recommend expansion" if recommend else "Hold - enable adoption first"
+    verdict_color = "Good" if recommend else "Warning"
+
+    label = company_name.strip() if isinstance(company_name, str) and company_name.strip() else "Summary"
+
+    if analytic_roi is not None and analytic_roi >= 100:
+        insight = "Adoption rate and hours saved are the biggest ROI levers; strong adoption is converting Copilot into net value."
+    else:
+        insight = "Adoption rate and hours saved are the biggest ROI levers; raising both would lift ROI the most."
+
+    return {
+        "title": "Copilot ROI - " + label,
+        "health": health,
+        "health_color": health_color,
+        "roi_percent": _pct(analytic_roi),
+        "roi_caption": "First-principles finance model",
+        "model_roi_percent": _pct(roi_pred) + " (model cross-check)",
+        "net_value": _money(analytic["net_value_month_usd"]) + " / mo",
+        "gross_value": _money(analytic["gross_value_month_usd"]) + " / mo",
+        "license_cost": _money(inputs["license_cost_month_usd"]) + " / mo",
+        "waste_cost": _money(waste_pred) + " / mo",
+        "adoption": "{:.1f}% ({:,.0f} of {:,.0f} seats)".format(
+            inputs["adoption_rate"] * 100, inputs["active_users"], inputs["licensed_users"]
+        ),
+        "hours_saved": "{:g} hrs/user/mo".format(inputs["avg_hours_saved_per_user_month"]),
+        "expansion": verdict + " (" + _pct(exp_prob * 100, 1) + " expansion signal)",
+        "expansion_color": verdict_color,
+        "insight": insight,
+        "note": "Trained on synthetic data; figures are directional, not guarantees."
+    }
+
+
 def predict(raw_inputs):
     feature_config, models = load_artifacts()
     inputs = normalize_inputs(raw_inputs)
@@ -165,8 +228,10 @@ def predict(raw_inputs):
     exp_prob = float(models["expansion_model"].predict_proba(exp_df)[0][1])
 
     analytic = finance_value_model(inputs)
+    card = build_card(raw_inputs.get("company_name"), inputs, roi_pred, waste_pred, exp_prob, analytic)
 
     return {
+        "card": card,
         "inputs_used": {
             "licensed_users": inputs["licensed_users"],
             "active_users": inputs["active_users"],

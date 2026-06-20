@@ -29,6 +29,10 @@
 			"inputSchema": {
 				"type": "object",
 				"properties": {
+					"company_name": {
+						"type": "string",
+						"description": "Optional company or department label shown on the ROI card."
+					},
 					"licensed_users": {
 						"type": "number",
 						"description": "Number of users assigned a Copilot license."
