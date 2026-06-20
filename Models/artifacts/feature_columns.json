@@ -1,0 +1,27 @@
+{
+    "roi_model": [
+        "licensed_users",
+        "active_users",
+        "adoption_rate",
+        "app_mix_score",
+        "avg_hours_saved_per_user_month",
+        "loaded_hourly_cost_usd",
+        "license_cost_month_usd",
+        "company_size"
+    ],
+    "waste_model": [
+        "licensed_users",
+        "active_users",
+        "adoption_rate",
+        "license_cost_month_usd",
+        "app_mix_score"
+    ],
+    "expansion_model": [
+        "active_users",
+        "adoption_rate",
+        "app_mix_score",
+        "avg_hours_saved_per_user_month",
+        "loaded_hourly_cost_usd",
+        "roi_percent_month"
+    ]
+}

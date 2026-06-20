@@ -1,0 +1,13 @@
+dataset,column_name,description,source_basis
+copilot_value_realization_mock_data.csv,company_segment,Synthetic company segment category,Team brief business segmentation assumption
+copilot_value_realization_mock_data.csv,licensed_users,Users assigned Copilot licenses,Team brief finance model input
+copilot_value_realization_mock_data.csv,active_users,Users actively using Copilot,Team brief telemetry input
+copilot_value_realization_mock_data.csv,adoption_rate,Active users divided by licensed users,Team brief adoption factor
+copilot_value_realization_mock_data.csv,avg_hours_saved_per_user_month,Synthetic monthly hours saved per active user,Team brief plus public benchmark-inspired assumption band
+copilot_value_realization_mock_data.csv,loaded_hourly_cost_usd,Role/department blended loaded labor cost,Team brief loaded hourly cost input
+copilot_value_realization_mock_data.csv,net_value_month_usd,Gross value minus license and enablement costs,Derived from finance model
+copilot_value_realization_mock_data.csv,roi_percent_month,Net value divided by license cost,Derived metric for dashboarding
+copilot_causal_training_data.csv,X1_team_size,Covariate representing team/project size,Stats framework X1-inspired field
+copilot_causal_training_data.csv,X2_avg_employee_age,Covariate representing average age,Stats framework X2-inspired field
+copilot_causal_training_data.csv,A_copilot_treatment,Binary treatment variable,Stats framework treatment A
+copilot_causal_training_data.csv,Y_observed_productivity_outcome,Observed outcome,Stats framework observed outcome Y
