@@ -122,29 +122,16 @@
 						"type": "string",
 						"description": "Optional company label for the benchmark output."
 					},
-					"departments": {
-						"type": "array",
-						"description": "Department metrics to benchmark.",
-						"items": {
-							"type": "object",
-							"properties": {
-								"name": { "type": "string", "description": "Department name." },
-								"licensed_users": { "type": "number", "description": "Licensed Copilot users." },
-								"active_users": { "type": "number", "description": "Active Copilot users." },
-								"adoption_rate": { "type": "number", "description": "Optional explicit adoption rate (0-1). Derived when omitted." },
-								"roi_percent_month": { "type": "number", "description": "Monthly ROI percent for the department." },
-								"avg_hours_saved_per_user_month": { "type": "number", "description": "Average monthly hours saved per active user." },
-								"waste_cost_month_usd": { "type": "number", "description": "Optional monthly wasted license cost." }
-							},
-							"required": ["name", "licensed_users", "active_users", "roi_percent_month", "avg_hours_saved_per_user_month"]
-						}
+					"departments_json": {
+						"type": "string",
+						"description": "JSON stringified array of department rows. Each row should include: name, licensed_users, active_users, roi_percent_month, avg_hours_saved_per_user_month, and optional adoption_rate, waste_cost_month_usd."
 					},
 					"low_performer_count": {
 						"type": "number",
 						"description": "How many low-performing departments to highlight. Defaults to 3."
 					}
 				},
-				"required": ["departments"]
+				"required": ["departments_json"]
 			}
 		}
 	]

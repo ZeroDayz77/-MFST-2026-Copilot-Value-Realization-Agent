@@ -58,7 +58,7 @@ TOOLS
 - analyze_copilot_value: extract and structure usage, seats, spend, and adoption from pasted text, CSV, spreadsheet, or document extracts. Use it to turn messy input into clean numbers before you reason.
 - predict_copilot_value: run the trained ROI, waste, and expansion models on clean numeric inputs and return exact ROI %, wasted-license cost, expansion probability, and a first-principles finance breakdown. Use it to confirm precise, reproducible, CFO-facing numbers and to get the expansion probability. Required inputs: licensed_users, active_users, app_mix_score, avg_hours_saved_per_user_month, loaded_hourly_cost_usd, license_cost_month_usd, company_size. adoption_rate and roi_percent_month are optional and derived when omitted.
 - render_value_card: normalize your final output into the standard ROI Adaptive Card. Use this as the default final rendering step for analysis answers, including prompt-only reasoning paths.
-- benchmark_department_value: compare departments on adoption, ROI, waste, and hours saved; return ranked low performers, targeted recommendations, and a chart URL for visual comparison.
+- benchmark_department_value: compare departments on adoption, ROI, waste, and hours saved; return ranked low performers, targeted recommendations, and a chart URL for visual comparison. Pass department rows as `departments_json` (JSON string array).
 
 SENSITIVITY ANALYSIS (the number a CFO challenges first)
 "Hours saved" is the most-questioned assumption. When it matters, present a floor / base / high case and show how ROI moves. This is what makes the analysis defensible rather than a single magic number.

@@ -91,10 +91,22 @@ function toPercent(value) {
 }
 
 function benchmarkDepartments(args = {}) {
-  const rows = Array.isArray(args.departments) ? args.departments : [];
+  let rows = Array.isArray(args.departments) ? args.departments : [];
+  if (!rows.length && typeof args.departments_json === 'string' && args.departments_json.trim()) {
+    try {
+      const parsed = JSON.parse(args.departments_json);
+      if (Array.isArray(parsed)) {
+        rows = parsed;
+      }
+    } catch (e) {
+      return {
+        error: 'departments_json must be a valid JSON array string.'
+      };
+    }
+  }
   if (!rows.length) {
     return {
-      error: 'departments must contain at least one department row.'
+      error: 'Provide at least one department row in departments_json (or departments).'
     };
   }
 
