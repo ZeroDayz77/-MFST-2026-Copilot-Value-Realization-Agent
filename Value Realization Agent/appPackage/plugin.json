@@ -248,6 +248,196 @@
 					}
 				}
 			}
+		},
+		{
+			"name": "render_value_card",
+			"description": "Render a standardized Copilot ROI Adaptive Card from either tool outputs or prompt-based reasoning outputs.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"title": { "type": "string", "description": "Card title." },
+					"company_name": { "type": "string", "description": "Optional company or department label." },
+					"roi_percent": { "type": "string", "description": "Displayed ROI percent text." },
+					"roi_percent_numeric": { "type": "number", "description": "Numeric ROI for automatic health classification when needed." },
+					"model_roi_percent": { "type": "string", "description": "Model ROI text shown in the caption." },
+					"roi_caption": { "type": "string", "description": "Short label indicating the ROI basis." },
+					"health": { "type": "string", "description": "Health label, for example Strong, Moderate, or At Risk." },
+					"health_color": { "type": "string", "description": "Adaptive Card color token (Good, Warning, Attention, Default)." },
+					"net_value": { "type": "string", "description": "Net monthly value text." },
+					"gross_value": { "type": "string", "description": "Gross monthly value text." },
+					"license_cost": { "type": "string", "description": "Monthly license cost text." },
+					"waste_cost": { "type": "string", "description": "Wasted license cost text." },
+					"adoption": { "type": "string", "description": "Adoption rate text." },
+					"hours_saved": { "type": "string", "description": "Average hours saved text." },
+					"expansion": { "type": "string", "description": "Expansion recommendation text." },
+					"expansion_color": { "type": "string", "description": "Adaptive Card color token for the expansion row." },
+					"insight": { "type": "string", "description": "One-line key insight." },
+					"note": { "type": "string", "description": "One-line confidence or caveat note." }
+				}
+			},
+			"returns": {
+				"type": "string",
+				"description": "A JSON payload containing a card object compatible with the standard ROI Adaptive Card template."
+			},
+			"states": {
+				"reasoning": {
+					"description": "Use this function to standardize final output rendering.",
+					"instructions": [
+						"Call this function for final answer rendering even when numbers were computed directly in prompt reasoning.",
+						"When a field is unavailable, pass a concise placeholder instead of omitting the card."
+					]
+				},
+				"responding": {
+					"description": "Return a card-shaped payload for consistent user experience.",
+					"instructions": [
+						"Keep the narrative concise and decision-oriented.",
+						"Use this as the default final render path for ROI responses."
+					]
+				}
+			},
+			"capabilities": {
+				"security_info": {
+					"data_handling": ["DataTransform"]
+				},
+				"response_semantics": {
+					"data_path": "$..card",
+					"properties": {
+						"title": "$.title"
+					},
+					"static_template": {
+						"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+						"type": "AdaptiveCard",
+						"version": "1.5",
+						"body": [
+							{
+								"type": "ColumnSet",
+								"columns": [
+									{
+										"type": "Column",
+										"width": "stretch",
+										"items": [
+											{ "type": "TextBlock", "text": "${title}", "weight": "Bolder", "size": "Large", "wrap": true }
+										]
+									},
+									{
+										"type": "Column",
+										"width": "auto",
+										"verticalContentAlignment": "Center",
+										"items": [
+											{ "type": "TextBlock", "text": "ROI Health: ${health}", "weight": "Bolder", "color": "${health_color}", "horizontalAlignment": "Right", "wrap": true }
+										]
+									}
+								]
+							},
+							{ "type": "TextBlock", "text": "${roi_percent}", "size": "ExtraLarge", "weight": "Bolder", "color": "${health_color}", "spacing": "Small" },
+							{ "type": "TextBlock", "text": "Monthly ROI - ${roi_caption} - ${model_roi_percent}", "isSubtle": true, "wrap": true, "spacing": "None" },
+							{ "type": "TextBlock", "text": "Monthly Value", "weight": "Bolder", "separator": true },
+							{
+								"type": "FactSet",
+								"facts": [
+									{ "title": "Net value", "value": "${net_value}" },
+									{ "title": "Gross value", "value": "${gross_value}" },
+									{ "title": "License cost", "value": "${license_cost}" },
+									{ "title": "Wasted licenses", "value": "${waste_cost}" }
+								]
+							},
+							{ "type": "TextBlock", "text": "Adoption", "weight": "Bolder", "separator": true },
+							{
+								"type": "FactSet",
+								"facts": [
+									{ "title": "Adoption", "value": "${adoption}" },
+									{ "title": "Hours saved", "value": "${hours_saved}" }
+								]
+							},
+							{ "type": "TextBlock", "text": "Expansion", "weight": "Bolder", "separator": true },
+							{ "type": "TextBlock", "text": "${expansion}", "weight": "Bolder", "color": "${expansion_color}", "wrap": true, "spacing": "None" },
+							{ "type": "TextBlock", "text": "${insight}", "wrap": true, "isSubtle": true, "separator": true },
+							{ "type": "TextBlock", "text": "${note}", "wrap": true, "isSubtle": true, "size": "Small", "spacing": "Small" }
+						]
+					}
+				}
+			}
+		},
+		{
+			"name": "benchmark_department_value",
+			"description": "Benchmark departments by ROI drivers, rank low performers, and return targeted Copilot recommendations with a comparison chart URL.",
+			"parameters": {
+				"type": "object",
+				"properties": {
+					"company_name": {
+						"type": "string",
+						"description": "Optional company label for the benchmark output."
+					},
+					"departments": {
+						"type": "array",
+						"description": "Department metrics to benchmark.",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": { "type": "string", "description": "Department name." },
+								"licensed_users": { "type": "number", "description": "Licensed Copilot users." },
+								"active_users": { "type": "number", "description": "Active Copilot users." },
+								"adoption_rate": { "type": "number", "description": "Optional explicit adoption rate (0-1). Derived when omitted." },
+								"roi_percent_month": { "type": "number", "description": "Monthly ROI percent for the department." },
+								"avg_hours_saved_per_user_month": { "type": "number", "description": "Average monthly hours saved per active user." },
+								"waste_cost_month_usd": { "type": "number", "description": "Optional monthly wasted license cost." }
+							},
+							"required": ["name", "licensed_users", "active_users", "roi_percent_month", "avg_hours_saved_per_user_month"]
+						}
+					},
+					"low_performer_count": {
+						"type": "number",
+						"description": "How many low-performing departments to highlight. Defaults to 3."
+					}
+				},
+				"required": ["departments"]
+			},
+			"returns": {
+				"type": "string",
+				"description": "A JSON payload containing ranked departments, low-performer recommendations, and a chart URL."
+			},
+			"states": {
+				"reasoning": {
+					"description": "Use this function when department-level data is available and comparative prioritization is needed.",
+					"instructions": [
+						"Rank departments by intervention opportunity using adoption, ROI, hours saved, and waste indicators.",
+						"Highlight low performers and return concrete department-specific actions."
+					]
+				},
+				"responding": {
+					"description": "Return a benchmark summary suitable for Adaptive Card rendering and narrative follow-up.",
+					"instructions": [
+						"Include chart_url and low-performer actions.",
+						"Keep recommendations concrete and intervention-focused."
+					]
+				}
+			},
+			"capabilities": {
+				"security_info": {
+					"data_handling": ["GetPrivateData", "DataTransform"]
+				},
+				"response_semantics": {
+					"data_path": "$..department_comparison",
+					"properties": {
+						"title": "$.title"
+					},
+					"static_template": {
+						"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+						"type": "AdaptiveCard",
+						"version": "1.5",
+						"body": [
+							{ "type": "TextBlock", "text": "${title}", "weight": "Bolder", "size": "Large", "wrap": true },
+							{ "type": "TextBlock", "text": "${summary}", "wrap": true, "isSubtle": true },
+							{ "type": "Image", "url": "${chart_url}", "size": "Stretch", "altText": "Department ROI and adoption chart" },
+							{ "type": "TextBlock", "text": "${low_performer_headline}", "weight": "Bolder", "separator": true, "wrap": true },
+							{ "type": "TextBlock", "text": "${low_performer_names}", "wrap": true },
+							{ "type": "TextBlock", "text": "Recommended Department Actions", "weight": "Bolder", "separator": true },
+							{ "type": "TextBlock", "text": "${low_performer_actions}", "wrap": true },
+							{ "type": "TextBlock", "text": "${recommendations}", "wrap": true, "spacing": "Small" }
+						]
+					}
+				}
+			}
 		}
 	],
 	"runtimes": [
@@ -256,7 +446,7 @@
 			"auth": {
 				"type": "None"
 			},
-			"run_for_functions": ["analyze_copilot_value", "predict_copilot_value"],
+			"run_for_functions": ["analyze_copilot_value", "predict_copilot_value", "render_value_card", "benchmark_department_value"],
 			"spec": {
 				"url": "http://localhost:3001/mcp",
 				"mcp_tool_description": {

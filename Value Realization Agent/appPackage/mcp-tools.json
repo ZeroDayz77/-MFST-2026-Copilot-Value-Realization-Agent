@@ -84,6 +84,68 @@
 					"company_size"
 				]
 			}
+		},
+		{
+			"name": "render_value_card",
+			"description": "Render a standardized Copilot ROI Adaptive Card from either tool outputs or prompt-based reasoning outputs.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"title": { "type": "string", "description": "Card title." },
+					"company_name": { "type": "string", "description": "Optional company/department name." },
+					"roi_percent": { "type": "string", "description": "Displayed ROI percent text." },
+					"roi_percent_numeric": { "type": "number", "description": "Numeric ROI used to auto-classify health when health is omitted." },
+					"model_roi_percent": { "type": "string", "description": "Model ROI text shown in caption." },
+					"roi_caption": { "type": "string", "description": "Short label for the ROI basis." },
+					"health": { "type": "string", "description": "Health label (for example: Strong, Moderate, At Risk)." },
+					"health_color": { "type": "string", "description": "Adaptive Card color token (Good, Warning, Attention, Default)." },
+					"net_value": { "type": "string", "description": "Net monthly value text." },
+					"gross_value": { "type": "string", "description": "Gross monthly value text." },
+					"license_cost": { "type": "string", "description": "Monthly license cost text." },
+					"waste_cost": { "type": "string", "description": "Wasted license cost text." },
+					"adoption": { "type": "string", "description": "Adoption rate text." },
+					"hours_saved": { "type": "string", "description": "Average hours saved text." },
+					"expansion": { "type": "string", "description": "Expansion recommendation text." },
+					"expansion_color": { "type": "string", "description": "Adaptive Card color token for expansion line." },
+					"insight": { "type": "string", "description": "One-line key insight." },
+					"note": { "type": "string", "description": "One-line caveat or confidence note." }
+				}
+			}
+		},
+		{
+			"name": "benchmark_department_value",
+			"description": "Benchmark departments by ROI drivers, rank low performers, and return targeted Copilot recommendations with a comparison chart URL.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"company_name": {
+						"type": "string",
+						"description": "Optional company label for the benchmark output."
+					},
+					"departments": {
+						"type": "array",
+						"description": "Department metrics to benchmark.",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": { "type": "string", "description": "Department name." },
+								"licensed_users": { "type": "number", "description": "Licensed Copilot users." },
+								"active_users": { "type": "number", "description": "Active Copilot users." },
+								"adoption_rate": { "type": "number", "description": "Optional explicit adoption rate (0-1). Derived when omitted." },
+								"roi_percent_month": { "type": "number", "description": "Monthly ROI percent for the department." },
+								"avg_hours_saved_per_user_month": { "type": "number", "description": "Average monthly hours saved per active user." },
+								"waste_cost_month_usd": { "type": "number", "description": "Optional monthly wasted license cost." }
+							},
+							"required": ["name", "licensed_users", "active_users", "roi_percent_month", "avg_hours_saved_per_user_month"]
+						}
+					},
+					"low_performer_count": {
+						"type": "number",
+						"description": "How many low-performing departments to highlight. Defaults to 3."
+					}
+				},
+				"required": ["departments"]
+			}
 		}
 	]
 }

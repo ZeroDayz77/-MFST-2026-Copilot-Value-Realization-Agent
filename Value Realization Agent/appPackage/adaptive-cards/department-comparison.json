@@ -1,0 +1,55 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "${title}",
+      "weight": "Bolder",
+      "size": "Large",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${summary}",
+      "isSubtle": true,
+      "wrap": true
+    },
+    {
+      "type": "Image",
+      "url": "${chart_url}",
+      "size": "Stretch",
+      "altText": "Department ROI and adoption comparison chart"
+    },
+    {
+      "type": "TextBlock",
+      "text": "${low_performer_headline}",
+      "weight": "Bolder",
+      "separator": true,
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${low_performer_names}",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "Recommended Department Actions",
+      "weight": "Bolder",
+      "separator": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${low_performer_actions}",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${recommendations}",
+      "wrap": true,
+      "spacing": "Small"
+    }
+  ]
+}
