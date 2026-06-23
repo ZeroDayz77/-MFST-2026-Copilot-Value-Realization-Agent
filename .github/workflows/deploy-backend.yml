@@ -1,0 +1,80 @@
+name: Deploy backend to Azure
+
+# Build, test, and deploy the Node/Express CRM backend to Azure App Service.
+# Scoring runs in pure-JS mode in production (no Python at runtime); model_params.json
+# is regenerated from the committed .pkl models and bundled into the deploy package.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'Models/**'
+      - 'infra/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write # OIDC login to Azure (no stored passwords)
+  contents: read
+
+env:
+  AZURE_WEBAPP_NAME: copilot-crm-demo # must match infra appName / your Web App
+  NODE_VERSION: '20.x'
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    environment: production # gate + per-environment secrets in GitHub
+    steps:
+      - uses: actions/checkout@v4
+
+      # Regenerate the trained-model parameters from the committed .pkl files so
+      # the JS scoring engine is exact and self-contained (and tests can score).
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Export model params
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Models/requirements.txt
+          python Models/export_params.py
+          mkdir -p backend/artifacts
+          cp Models/artifacts/model_params.json backend/artifacts/model_params.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run tests
+        working-directory: backend
+        run: npm test
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: backend
+
+      - name: Smoke test the deployment
+        run: |
+          sleep 20
+          curl --fail --retry 5 --retry-delay 10 \
+            "https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/health"

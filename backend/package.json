@@ -1,0 +1,21 @@
+{
+  "name": "copilot-crm-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AI-powered CRM backend (middle layer) for the Copilot Value Realization product. Takes user input, ranks each lead with the trained ROI/waste/expansion models, and enriches leads (sales pitch, outreach, actions) via an LLM API.",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
