@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": { "value": "copilot-crm-demo" },
+    "location": { "value": "eastus2" },
+    "sku": { "value": "B1" },
+    "productName": { "value": "Microsoft 365 Copilot" },
+    "azureOpenAiEndpoint": { "value": "https://YOUR-AOAI-RESOURCE.openai.azure.com" },
+    "azureOpenAiDeployment": { "value": "gpt-4o-mini" },
+    "azureOpenAiApiVersion": { "value": "2024-08-01-preview" },
+    "azureOpenAiApiKey": { "value": "DO-NOT-COMMIT-pass-on-CLI-with--p-azureOpenAiApiKey=$KEY" }
+  }
+}
