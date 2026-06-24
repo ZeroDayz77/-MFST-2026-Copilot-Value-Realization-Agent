@@ -30,6 +30,7 @@ param(
   [string]$Location = 'eastus2',
   [string]$Sku = 'F1',
   [string]$ProductName = 'Microsoft 365 Copilot',
+  [string]$Runtime = '',  # e.g. 'NODE:20-lts'. Auto-detected from the CLI when blank.
 
   [ValidateSet('mock', 'azure', 'openai')]
   [string]$LlmProvider = 'mock',
@@ -124,19 +125,46 @@ Write-Host "Package: $zip"
 # --- Provision (idempotent) ----------------------------------------------
 Step 'Ensuring Azure resources'
 az group create -n $ResourceGroup -l $Location | Out-Null
+if ($LASTEXITCODE -ne 0) { Fail "Could not create/access resource group '$ResourceGroup'." }
 
 $planName = "$AppName-plan"
 $planExists = az appservice plan show -g $ResourceGroup -n $planName 2>$null
 if (-not $planExists) {
-  Write-Host "Creating plan $planName ($Sku, Linux)"
-  az appservice plan create -g $ResourceGroup -n $planName --sku $Sku --is-linux | Out-Null
+  Write-Host "Creating plan $planName ($Sku, Linux)..."
+  # Show the real error if this fails (don't swallow it).
+  $planErr = az appservice plan create -g $ResourceGroup -n $planName --sku $Sku --is-linux 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host $planErr -ForegroundColor Red
+    Fail "App Service plan creation failed (SKU '$Sku'). On student/free subscriptions the F1 quota is often 0 or already used. Retry with a paid tier, e.g.  -Sku B1"
+  }
 }
 
 $appExists = az webapp show -g $ResourceGroup -n $AppName 2>$null
 if (-not $appExists) {
-  Write-Host "Creating web app $AppName (NODE:20-lts)"
-  az webapp create -g $ResourceGroup -p $planName -n $AppName --runtime 'NODE:20-lts' | Out-Null
+  # Resolve a Node runtime the installed CLI actually supports (the label format
+  # changed across CLI versions, e.g. NODE:20-lts vs NODE|20LTS).
+  $runtime = $Runtime
+  if (-not $runtime) {
+    Write-Host 'Detecting a supported Node runtime...'
+    $runtimes = az webapp list-runtimes --os-type linux 2>$null | ConvertFrom-Json
+    foreach ($pref in @('NODE:22-lts', 'NODE:20-lts', 'NODE:18-lts')) {
+      if ($runtimes -contains $pref) { $runtime = $pref; break }
+    }
+    if (-not $runtime) {
+      $runtime = $runtimes | Where-Object { $_ -match '^NODE' } | Select-Object -First 1
+    }
+    if (-not $runtime) { $runtime = 'NODE:20-lts' }
+  }
+  Write-Host "Creating web app $AppName ($runtime)..."
+  $appErr = az webapp create -g $ResourceGroup -p $planName -n $AppName --runtime $runtime 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host $appErr -ForegroundColor Red
+    Fail "Web app creation failed. Either the name '$AppName' is taken (must be globally unique) or runtime '$runtime' is unsupported. Run 'az webapp list-runtimes --os-type linux' and pass a value via -Runtime."
+  }
 }
+# Confirm the app really exists before we try to configure/deploy to it.
+$null = az webapp show -g $ResourceGroup -n $AppName 2>$null
+if ($LASTEXITCODE -ne 0) { Fail "Web app '$AppName' does not exist after provisioning; aborting before deploy." }
 
 # --- App settings ---------------------------------------------------------
 Step 'Applying app settings'
