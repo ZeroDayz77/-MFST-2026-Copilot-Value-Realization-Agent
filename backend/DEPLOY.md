@@ -29,6 +29,12 @@ Azure OpenAI is **bring‑your‑own** (passed as parameters) — create it sepa
 - An **Azure OpenAI** resource with a chat **deployment** (e.g. `gpt-4o-mini`); note its endpoint, deployment name, and key.
 - The repo on GitHub. The workflow triggers on **`main`** — merge this branch to `main` (or edit the `branches:` filter in `.github/workflows/deploy-backend.yml`).
 
+> **Azure for Students note:** student subscriptions often **can't create Azure OpenAI**
+> (quota 0 / blocked by policy) and EDU tenants usually **block the OIDC app registration**.
+> If so: use the **manual deploy script** below (no app registration) and point the app at an
+> **OpenAI.com** key (`-LlmProvider openai`) instead of Azure OpenAI. The free **F1** App
+> Service tier keeps cost near zero.
+
 ## 2. Provision infrastructure (one time)
 ```bash
 RG=copilot-crm-rg
@@ -82,6 +88,41 @@ Verify:
 curl https://copilot-crm-demo.azurewebsites.net/api/health
 curl https://copilot-crm-demo.azurewebsites.net/api/meta   # llm.provider=azure, scoring.engine=js
 ```
+
+---
+
+## Manual deploy (no OIDC / no app registration) — best for Azure for Students
+School/EDU tenants usually block the Entra app registration that OIDC needs. Use the
+bundled one-command script instead — it provisions the resource group, plan (free **F1**
+by default), and web app if missing, builds a clean package (no `.env`, tests, or local
+data), zip-deploys, sets app settings, and health-checks.
+
+```powershell
+# Windows PowerShell — from the backend/ folder
+az login
+
+# No LLM yet (scoring/ranking work; text uses deterministic fallback):
+./deploy.ps1 -AppName my-copilot-crm
+
+# With Azure OpenAI:
+./deploy.ps1 -AppName my-copilot-crm -LlmProvider azure `
+  -AzureOpenAiEndpoint https://my-aoai.openai.azure.com `
+  -AzureOpenAiDeployment gpt-4o-mini -AzureOpenAiApiKey $env:AOAI_KEY
+
+# With an OpenAI.com key (often easiest on a student account):
+./deploy.ps1 -AppName my-copilot-crm -LlmProvider openai -OpenAiApiKey $env:OPENAI_KEY
+```
+
+```bash
+# Azure Cloud Shell / macOS / Linux — equivalent bash script
+./deploy.sh -n my-copilot-crm                                   # no LLM
+./deploy.sh -n my-copilot-crm -p openai --openai-key "$OPENAI_KEY"
+./deploy.sh -n my-copilot-crm -p azure --aoai-endpoint https://my-aoai.openai.azure.com \
+            --aoai-deployment gpt-4o-mini --aoai-key "$AOAI_KEY"
+```
+
+Re-run the same command anytime to redeploy (it's idempotent). Tail logs with
+`az webapp log tail -g copilot-crm-rg -n my-copilot-crm`.
 
 ---
 
