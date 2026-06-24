@@ -163,12 +163,12 @@ function renderCompanyCards(companies) {
         </div>
         <div class="metric-row"><span class="metric-key">Licensed Users</span><span class="metric-val">${fmtInt(c.licensed)}</span></div>
         <div class="metric-row"><span class="metric-key">Active Users</span><span class="metric-val">${fmtInt(c.active)}</span></div>
-        <div class="metric-row"><span class="metric-key">Net Value</span><span class="metric-val" style="color:var(--accent4)">${fmtUsd(c.net)}</span></div>
+        <div class="metric-row"><span class="metric-key">Net Value</span><span class="metric-val" style="color:var(--success)">${fmtUsd(c.net)}</span></div>
         <div class="metric-row"><span class="metric-key">Monthly Spend</span><span class="metric-val">${fmtUsd(c.spend)}</span></div>
         <div class="metric-row"><span class="metric-key">Waste Cost</span><span class="metric-val" style="color:var(--danger)">${fmtUsd(c.waste)}</span></div>
         <div class="adoption-bar-wrap">
           <div class="adoption-label"><span>Adoption Rate</span><span>${fmtPct(c.adoptionRate * 100, 1)}</span></div>
-          <div class="adoption-track"><div class="adoption-fill" style="width:${Math.min(c.adoptionRate * 100, 100)}%;background:linear-gradient(90deg,${color},var(--accent2))"></div></div>
+          <div class="adoption-track"><div class="adoption-fill" style="width:${Math.min(c.adoptionRate * 100, 100)}%"></div></div>
         </div>
         <div class="kpi-meta" style="margin-top:8px">${fmtInt(idle)} idle seats</div>
       </div>`;

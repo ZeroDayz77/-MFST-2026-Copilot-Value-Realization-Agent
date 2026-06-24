@@ -39,14 +39,14 @@ export function priorityClass(priority) {
 }
 
 export function roiClass(roiPct) {
-  if (roiPct >= 100) return { bg: 'rgba(67,217,173,0.15)', fg: 'var(--accent4)' };
-  if (roiPct >= 30) return { bg: 'rgba(255,200,87,0.15)', fg: 'var(--warning)' };
-  return { bg: 'rgba(255,77,109,0.15)', fg: 'var(--danger)' };
+  if (roiPct >= 100) return { bg: 'var(--success-soft)', fg: 'var(--success)' };
+  if (roiPct >= 30) return { bg: 'var(--warning-soft)', fg: 'var(--warning)' };
+  return { bg: 'var(--danger-soft)', fg: 'var(--danger)' };
 }
 
 export function healthColor(health) {
   const h = String(health || '').toLowerCase();
-  if (h.includes('strong')) return 'var(--accent4)';
+  if (h.includes('strong')) return 'var(--success)';
   if (h.includes('moderate')) return 'var(--warning)';
   if (h.includes('risk') || h.includes('weak')) return 'var(--danger)';
   return 'var(--text-secondary)';

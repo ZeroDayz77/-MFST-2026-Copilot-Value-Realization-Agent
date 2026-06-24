@@ -24,7 +24,7 @@ async function showAiStatus() {
       banner.style.color = 'var(--warning)';
     } else {
       banner.innerHTML = `✨ <strong>AI enabled</strong> — ${esc(llm.provider)} · ${esc(llm.model || '')}. The model will generate per-lead insights.`;
-      banner.style.color = 'var(--accent4)';
+      banner.style.color = 'var(--success)';
     }
   } catch {
     /* dashboard handles connection errors; intake stays usable */
