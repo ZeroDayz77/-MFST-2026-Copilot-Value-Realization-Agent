@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Copilot CRM · Add Leads</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo">🤖</div>
+    <div>
+      <div class="brand-text">Copilot CRM</div>
+      <div class="brand-sub">AI-Powered Value Realization</div>
+    </div>
+  </div>
+  <nav class="top-links">
+    <a class="top-link" href="index.html">Dashboard</a>
+    <a class="top-link active" href="intake.html">+ Add Leads</a>
+  </nav>
+  <div class="header-right">
+    <span class="badge badge-live">● Live Data</span>
+  </div>
+</header>
+
+<div class="intake-wrap">
+  <div id="aiStatus" class="panel-sub" style="margin-bottom:18px;">Checking AI status…</div>
+
+  <div class="intake-grid">
+    <!-- AI INTAKE: prompt + file -->
+    <div class="panel">
+      <h2>Add with AI</h2>
+      <div class="panel-sub">Paste a prompt and/or upload a leads file (CSV, JSON, or text). The AI parses the file, fills any missing metrics, follows your instruction, then the models score &amp; rank every lead.</div>
+
+      <div class="field">
+        <label for="promptInput">Prompt</label>
+        <textarea id="promptInput" placeholder="e.g. Import these accounts and find 3 more mid-market finance firms likely to expand Copilot."></textarea>
+        <div class="field-hint">Used to generate net-new leads and to steer how the file is interpreted.</div>
+      </div>
+
+      <div class="field">
+        <label>Leads file (optional)</label>
+        <div id="dropzone" class="dropzone">
+          <strong>Click to choose</strong> or drag a file here<br />
+          <span style="font-size:11px;">CSV, JSON, or pasted text</span>
+        </div>
+        <input id="fileInput" type="file" accept=".csv,.json,.txt,text/*" style="display:none;" />
+        <div id="filePill" class="file-pill">
+          <span class="file-name"></span>
+          <button type="button" title="Remove">✕</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="countInput">Net-new leads to generate (optional)</label>
+        <input id="countInput" type="number" min="0" max="25" placeholder="e.g. 3" />
+        <div class="field-hint">Leave blank to import the file only. With no file, this generates from the prompt.</div>
+      </div>
+
+      <label class="checkbox-row"><input id="intakeEnrich" type="checkbox" checked /> Let the AI write each lead's pitch &amp; outreach now</label>
+
+      <button id="intakeSubmit" class="btn btn-primary">✨ Import &amp; Score</button>
+      <div id="intakeResult" class="intake-result"></div>
+    </div>
+
+    <!-- MANUAL SINGLE LEAD -->
+    <div class="panel">
+      <h2>Add one manually</h2>
+      <div class="panel-sub">Enter a single account's Copilot numbers. All seven metrics are required for scoring.</div>
+
+      <div class="field"><label for="c_company">Company</label><input id="c_company" type="text" placeholder="Contoso Financial" /></div>
+      <div class="field-row">
+        <div class="field"><label for="c_industry">Industry</label><input id="c_industry" type="text" placeholder="Finance" /></div>
+        <div class="field"><label for="c_contact">Contact name</label><input id="c_contact" type="text" placeholder="Dana Lee" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="c_title">Contact title</label><input id="c_title" type="text" placeholder="CIO" /></div>
+        <div class="field"><label for="c_email">Contact email</label><input id="c_email" type="email" placeholder="dana@contoso.com" /></div>
+      </div>
+
+      <div class="field-row">
+        <div class="field"><label for="m_licensed_users">Licensed users</label><input id="m_licensed_users" type="number" placeholder="2000" /></div>
+        <div class="field"><label for="m_active_users">Active users</label><input id="m_active_users" type="number" placeholder="900" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="m_app_mix_score">App mix score</label><input id="m_app_mix_score" type="number" placeholder="620" /></div>
+        <div class="field"><label for="m_avg_hours_saved_per_user_month">Hours saved / user / mo</label><input id="m_avg_hours_saved_per_user_month" type="number" placeholder="3.5" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="m_loaded_hourly_cost_usd">Loaded hourly cost ($)</label><input id="m_loaded_hourly_cost_usd" type="number" placeholder="72" /></div>
+        <div class="field"><label for="m_license_cost_month_usd">License cost / mo ($)</label><input id="m_license_cost_month_usd" type="number" placeholder="62000" /></div>
+      </div>
+      <div class="field"><label for="m_company_size">Company size (headcount)</label><input id="m_company_size" type="number" placeholder="12000" /></div>
+
+      <label class="checkbox-row"><input id="manualEnrich" type="checkbox" /> Generate AI insights for this lead</label>
+
+      <button id="manualSubmit" class="btn btn-accent">＋ Add &amp; Score</button>
+      <div id="manualResult" class="intake-result"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/intake.js"></script>
+</body>
+</html>

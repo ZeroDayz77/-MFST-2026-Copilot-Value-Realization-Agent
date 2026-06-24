@@ -108,6 +108,15 @@ Copy-Item $paramsSrc (Join-Path $stage 'artifacts/model_params.json')
 $null = New-Item -ItemType Directory -Path (Join-Path $stage 'data')
 Set-Content -Path (Join-Path $stage 'data/.gitkeep') -Value ''
 
+# Bundle the static frontend so the backend serves the dashboard same-origin.
+$frontendSrc = Join-Path $repoRoot 'frontend'
+if (Test-Path (Join-Path $frontendSrc 'index.html')) {
+  Copy-Item $frontendSrc (Join-Path $stage 'frontend') -Recurse
+  Write-Host 'Bundled frontend/ into the package.'
+} else {
+  Write-Host 'No frontend/ found; deploying API only.'
+}
+
 $zip = Join-Path ([System.IO.Path]::GetTempPath()) ("crm-deploy-" + [guid]::NewGuid().ToString('N') + '.zip')
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -Force
 Write-Host "Package: $zip"

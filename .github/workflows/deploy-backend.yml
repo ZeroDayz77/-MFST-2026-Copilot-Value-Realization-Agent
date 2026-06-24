@@ -45,6 +45,9 @@ jobs:
           mkdir -p backend/artifacts
           cp Models/artifacts/model_params.json backend/artifacts/model_params.json
 
+      - name: Bundle frontend
+        run: cp -r frontend backend/frontend
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

@@ -87,6 +87,15 @@ export const config = {
   repoRoot: REPO_ROOT,
   port: num(process.env.PORT, 3000),
   product: process.env.PRODUCT_NAME || 'Microsoft 365 Copilot',
+  // Static frontend dir: bundled copy (backend/frontend, used in deploys) wins,
+  // else the repo-root sibling for local dev.
+  frontendDir: resolveMaybe(
+    process.env.FRONTEND_DIR,
+    firstExisting([
+      path.join(BACKEND_ROOT, 'frontend'),
+      path.join(REPO_ROOT, 'frontend'),
+    ]),
+  ),
   dataFile: resolveMaybe(process.env.DATA_FILE, path.join(BACKEND_ROOT, 'data', 'leads.json')),
   scoring: {
     engine: (process.env.SCORING_ENGINE || 'auto').toLowerCase(), // auto | python | js

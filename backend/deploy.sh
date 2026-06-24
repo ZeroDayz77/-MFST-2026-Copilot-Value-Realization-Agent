@@ -76,6 +76,13 @@ cp "$BACKEND/package.json" "$BACKEND/package-lock.json" "$STAGE/"
 mkdir -p "$STAGE/artifacts" "$STAGE/data"
 cp "$PARAMS" "$STAGE/artifacts/model_params.json"
 : > "$STAGE/data/.gitkeep"
+# Bundle the static frontend so the backend serves the dashboard same-origin.
+if [[ -f "$REPO_ROOT/frontend/index.html" ]]; then
+  cp -r "$REPO_ROOT/frontend" "$STAGE/frontend"
+  echo "Bundled frontend/ into the package."
+else
+  echo "No frontend/ found; deploying API only."
+fi
 ( cd "$STAGE" && zip -qr "$ZIP" . )
 
 step "Ensuring Azure resources"

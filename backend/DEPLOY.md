@@ -22,6 +22,11 @@ GitHub (push to main)
 
 Azure OpenAI is **bring‑your‑own** (passed as parameters) — create it separately.
 
+> The static **dashboard** (`frontend/`) is bundled into the deploy package and
+> served by the backend at `/`, so one App Service hosts both UI and API. After
+> deploy, browse to `https://<app>.azurewebsites.net/` for the dashboard and
+> `/api/meta` for the API.
+
 ---
 
 ## 1. Prerequisites
