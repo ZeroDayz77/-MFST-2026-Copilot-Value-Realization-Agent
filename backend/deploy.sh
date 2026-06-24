@@ -88,10 +88,32 @@ fi
 step "Ensuring Azure resources"
 az group create -n "$RG" -l "$LOCATION" -o none
 PLAN="$APP-plan"
-az appservice plan show -g "$RG" -n "$PLAN" -o none 2>/dev/null || \
-  az appservice plan create -g "$RG" -n "$PLAN" --sku "$SKU" --is-linux -o none
-az webapp show -g "$RG" -n "$APP" -o none 2>/dev/null || \
-  az webapp create -g "$RG" -p "$PLAN" -n "$APP" --runtime 'NODE:20-lts' -o none
+if ! az appservice plan show -g "$RG" -n "$PLAN" -o none 2>/dev/null; then
+  echo "Creating plan $PLAN ($SKU, Linux)..."
+  if ! az appservice plan create -g "$RG" -n "$PLAN" --sku "$SKU" --is-linux -o none; then
+    echo "ERROR: plan creation failed (SKU '$SKU'). Student/free subs often have F1 quota 0; retry with --sku B1." >&2
+    exit 1
+  fi
+fi
+if ! az webapp show -g "$RG" -n "$APP" -o none 2>/dev/null; then
+  # Resolve a Node runtime the installed CLI supports (label format varies by version).
+  RT="${RUNTIME:-}"
+  if [[ -z "$RT" ]]; then
+    echo "Detecting a supported Node runtime..."
+    RUNTIMES="$(az webapp list-runtimes --os-type linux -o tsv 2>/dev/null)"
+    for pref in "NODE:22-lts" "NODE:20-lts" "NODE:18-lts"; do
+      if grep -qx "$pref" <<< "$RUNTIMES"; then RT="$pref"; break; fi
+    done
+    [[ -z "$RT" ]] && RT="$(grep '^NODE' <<< "$RUNTIMES" | head -n1)"
+    [[ -z "$RT" ]] && RT="NODE:20-lts"
+  fi
+  echo "Creating web app $APP ($RT)..."
+  if ! az webapp create -g "$RG" -p "$PLAN" -n "$APP" --runtime "$RT" -o none; then
+    echo "ERROR: web app creation failed. Name '$APP' may be taken (must be globally unique), or runtime '$RT' is unsupported. Run 'az webapp list-runtimes --os-type linux'." >&2
+    exit 1
+  fi
+fi
+az webapp show -g "$RG" -n "$APP" -o none 2>/dev/null || { echo "ERROR: web app '$APP' missing after provisioning; aborting." >&2; exit 1; }
 
 step "Applying app settings"
 SETTINGS=( "SCM_DO_BUILD_DURING_DEPLOYMENT=false" "NODE_ENV=production" \
