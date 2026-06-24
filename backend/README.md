@@ -206,9 +206,10 @@ It's a thin renderer: all insights come from `lead.scoring` (models) and
   enabled so a separately hosted frontend can also call the API.
 
 ## Deploying to Azure
-See **[DEPLOY.md](DEPLOY.md)** for the full guide. In short: GitHub Actions builds,
-tests, and deploys to **Azure App Service** (Node 20) using the **pure‑JS scoring
-engine** (no Python at runtime). App config comes from **App Settings**; the Azure
-OpenAI key lives in **Key Vault** and is injected via a managed‑identity reference.
-Infra is one Bicep file (`infra/main.bicep`); the pipeline is
-`.github/workflows/deploy-backend.yml`.
+See **[DEPLOY.md](DEPLOY.md)** for the full guide. In short: run the bundled
+**one‑command script** (`deploy.ps1` / `deploy.sh`) which builds, tests, and deploys to
+**Azure App Service** (Node 20) using the **pure‑JS scoring engine** (no Python at
+runtime) and bundles the frontend. Config comes from **App Settings**; the LLM key is
+passed to the script (or kept in **Key Vault** via the optional `infra/main.bicep` path).
+No CI/CD pipeline — deployment is manual, which suits Azure for Students (no OIDC / app
+registration needed).
