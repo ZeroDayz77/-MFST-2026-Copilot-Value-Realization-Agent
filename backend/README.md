@@ -36,10 +36,13 @@ dashboard.
 cd backend
 npm install
 cp .env.example .env        # optional — runs in mock mode without it
-npm start                   # http://localhost:3000
+npm start                   # http://localhost:3000  (dashboard + API)
 # or: npm run dev           # watch mode
 npm test                    # offline smoke tests (mock LLM + JS engine)
 ```
+
+Then open **http://localhost:3000** for the dashboard (the backend serves
+`../frontend/`). The API is under `/api` (e.g. `/api/meta`).
 
 > Requires the trained artifacts. From `Models/`: `python export_params.py`
 > (writes `artifacts/model_params.json` for the JS engine). The Python engine
@@ -182,18 +185,31 @@ Thresholds → priority: ≥75 `Hot`, ≥50 `Warm`, ≥25 `Cool`, else `Cold`.
   and replicates the finance model + linear/logistic formulas. Both engines agree
   (e.g. Northstar finance ROI = 287.09%).
 
+## Frontend
+The static dashboard in `../frontend/` is served by this backend at `/`
+(same‑origin → it just calls `/api/*`). Two pages:
+- **`/` (index.html)** — ranked leads, KPIs, account cards, charts, and a per‑lead
+  drawer showing the **LLM playbook** (pitch, talking points, risks, actions,
+  outreach) with **Analyze** / **Draft email** actions.
+- **`/intake.html`** — add leads via prompt + file upload (`/api/leads/intake`),
+  generate from a prompt, or enter one manually.
+
+It's a thin renderer: all insights come from `lead.scoring` (models) and
+`lead.enrichment` (LLM). Vanilla ES modules + CSS, no build step.
+
 ## Notes
 - Persistence is a JSON file (`data/leads.json`, git‑ignored) behind a small store
   interface — swap for a real DB later without touching routes.
 - The DA (`../Value Realization Agent/`) is left intact; this service supersedes it
   as the product entry point.
-- Out of scope (for now): frontend dashboard, auth, real database. CORS is enabled
-  so a dashboard can call it directly.
+- Out of scope (for now): auth, real database, multi‑instance scale‑out. CORS is
+  enabled so a separately hosted frontend can also call the API.
 
 ## Deploying to Azure
-See **[DEPLOY.md](DEPLOY.md)** for the full guide. In short: GitHub Actions builds,
-tests, and deploys to **Azure App Service** (Node 20) using the **pure‑JS scoring
-engine** (no Python at runtime). App config comes from **App Settings**; the Azure
-OpenAI key lives in **Key Vault** and is injected via a managed‑identity reference.
-Infra is one Bicep file (`infra/main.bicep`); the pipeline is
-`.github/workflows/deploy-backend.yml`.
+See **[DEPLOY.md](DEPLOY.md)** for the full guide. In short: run the bundled
+**one‑command script** (`deploy.ps1` / `deploy.sh`) which builds, tests, and deploys to
+**Azure App Service** (Node 20) using the **pure‑JS scoring engine** (no Python at
+runtime) and bundles the frontend. Config comes from **App Settings**; the LLM key is
+passed to the script (or kept in **Key Vault** via the optional `infra/main.bicep` path).
+No CI/CD pipeline — deployment is manual, which suits Azure for Students (no OIDC / app
+registration needed).

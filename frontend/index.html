@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Copilot CRM · Dashboard</title>
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo"><img src="assets/logo.png" alt="Copilot CRM logo" /></div>
+    <div>
+      <div class="brand-text">Copilot CRM</div>
+      <div class="brand-sub">AI-Powered Value Realization</div>
+    </div>
+  </div>
+  <nav class="top-links">
+    <a class="top-link active" href="index.html">Dashboard</a>
+    <a class="top-link" href="intake.html">+ Add Leads</a>
+  </nav>
+  <div class="header-right" style="display:flex;align-items:center;gap:12px;">
+    <button id="rerankBtn" class="btn btn-sm btn-ghost">↕ Re-rank</button>
+    <button id="refreshBtn" class="btn btn-sm btn-ghost">⟳ Refresh</button>
+    <span class="badge badge-live">● Live Data</span>
+    <span id="portfolioHeaderMeta" style="font-size:12px;color:var(--text-secondary);">Loading…</span>
+  </div>
+</header>
+
+<main>
+  <!-- KPI BAND -->
+  <div class="kpi-grid">
+    <div class="kpi-card c1">
+      <div class="kpi-label">Portfolio ROI</div>
+      <div id="kpiPortfolioRoi" class="kpi-value" style="color:#6c63ff">—</div>
+      <div class="kpi-meta">Net value ÷ monthly spend</div>
+    </div>
+    <div class="kpi-card c2">
+      <div class="kpi-label">Gross Value Generated</div>
+      <div id="kpiGrossValue" class="kpi-value" style="color:#00c2ff">$0</div>
+      <div class="kpi-meta">Monthly across all leads</div>
+    </div>
+    <div class="kpi-card c3">
+      <div class="kpi-label">Net Value (After Spend)</div>
+      <div id="kpiNetValue" class="kpi-value" style="color:#43d9ad">$0</div>
+      <div class="kpi-meta">Monthly net</div>
+    </div>
+    <div class="kpi-card c4">
+      <div class="kpi-label">Active Users</div>
+      <div id="kpiActiveUsers" class="kpi-value" style="color:#ffc857">0</div>
+      <div id="kpiActiveUsersMeta" class="kpi-meta">0% overall adoption</div>
+    </div>
+    <div class="kpi-card c5">
+      <div class="kpi-label">Wasted Spend</div>
+      <div id="kpiWastedSpend" class="kpi-value" style="color:#ff6b9d">$0</div>
+      <div class="kpi-meta">Inactive licenses / mo</div>
+    </div>
+  </div>
+
+  <!-- LEAD TABLE -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">Ranked Leads</div>
+    <div class="card-sub">Click a lead to open its AI sales playbook. Ranking comes from the trained models.</div>
+    <div class="lead-table-wrap">
+      <table class="lead-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-sort="rank">Rank <span class="sort-indicator">↕</span></th>
+            <th class="sortable" data-sort="company">Company <span class="sort-indicator">↕</span></th>
+            <th class="sortable" data-sort="priority">Priority <span class="sort-indicator">↕</span></th>
+            <th class="sortable" data-sort="leadScore">Lead Score <span class="sort-indicator">↕</span></th>
+            <th class="sortable" data-sort="roi">ROI % <span class="sort-indicator">↕</span></th>
+            <th class="sortable" data-sort="netValue">Net Value <span class="sort-indicator">↕</span></th>
+            <th class="sortable" data-sort="adoption">Adoption <span class="sort-indicator">↕</span></th>
+            <th class="sortable" data-sort="stage">Stage <span class="sort-indicator">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="leadTableBody">
+          <tr><td colspan="8" class="loading-row">Loading leads…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMPANY CARDS -->
+  <div class="section-header">
+    <div>
+      <div class="section-title">Accounts</div>
+      <div class="card-sub">Portfolio breakdown — click a card for the lead playbook</div>
+    </div>
+  </div>
+  <div id="companyGrid" class="company-grid"></div>
+
+  <!-- CHARTS -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">ROI by Account</div>
+      <div class="chart-wrap"><canvas id="roiChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Gross vs Net Value</div>
+      <div class="chart-wrap"><canvas id="valueChart"></canvas></div>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">Portfolio Adoption</div>
+      <div class="chart-wrap"><canvas id="adoptionDonut"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Monthly Spend</div>
+      <div class="chart-wrap"><canvas id="spendChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Seats by Account</div>
+      <div class="chart-wrap"><canvas id="seatsDonut"></canvas></div>
+    </div>
+  </div>
+</main>
+
+<footer id="dashboardFooter">
+  Copilot CRM · AI-powered lead ranking &amp; enablement · insights generated by the trained models + LLM
+</footer>
+
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

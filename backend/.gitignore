@@ -3,4 +3,5 @@ node_modules/
 .env.local
 data/leads.json
 artifacts/
+frontend/
 *.log

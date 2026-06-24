@@ -3,6 +3,8 @@
 
 import express from 'express';
 import cors from 'cors';
+import fs from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import config from './config.js';
@@ -10,6 +12,25 @@ import { LeadStore } from './services/leadStore.js';
 import { createLeadService } from './services/leadService.js';
 import { makeLeadRoutes } from './routes/leads.routes.js';
 import { makeMetaRoutes } from './routes/meta.routes.js';
+
+const API_INFO = {
+  name: 'Copilot CRM backend',
+  endpoints: [
+    'GET    /api/health',
+    'GET    /api/meta',
+    'GET    /api/leads',
+    'POST   /api/leads',
+    'POST   /api/leads/generate',
+    'POST   /api/leads/intake',
+    'POST   /api/leads/import',
+    'POST   /api/leads/rank',
+    'GET    /api/leads/:id',
+    'PATCH  /api/leads/:id',
+    'DELETE /api/leads/:id',
+    'POST   /api/leads/:id/analyze',
+    'POST   /api/leads/:id/outreach',
+  ],
+};
 
 export async function buildApp({ store } = {}) {
   const leadStore = store || new LeadStore(config.dataFile);
@@ -20,33 +41,31 @@ export async function buildApp({ store } = {}) {
   app.use(cors());
   app.use(express.json({ limit: '4mb' }));
 
-  app.get('/', (req, res) => {
-    res.json({
-      name: 'Copilot CRM backend',
-      product: config.product,
-      docs: '/api/meta',
-      endpoints: [
-        'GET    /api/health',
-        'GET    /api/meta',
-        'GET    /api/leads',
-        'POST   /api/leads',
-        'POST   /api/leads/generate',
-        'POST   /api/leads/intake',
-        'POST   /api/leads/import',
-        'POST   /api/leads/rank',
-        'GET    /api/leads/:id',
-        'PATCH  /api/leads/:id',
-        'DELETE /api/leads/:id',
-        'POST   /api/leads/:id/analyze',
-        'POST   /api/leads/:id/outreach',
-      ],
-    });
+  // API info (the JSON that used to live at "/").
+  app.get('/api', (req, res) => {
+    res.json({ ...API_INFO, product: config.product, docs: '/api/meta' });
   });
 
   app.use('/api', makeMetaRoutes({ store: leadStore }));
   app.use('/api/leads', makeLeadRoutes({ store: leadStore, leadService }));
 
-  app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+  // Static frontend (served same-origin so the dashboard can call /api/* directly).
+  const frontendDir = config.frontendDir;
+  const hasFrontend = frontendDir && fs.existsSync(path.join(frontendDir, 'index.html'));
+  if (hasFrontend) {
+    app.use(express.static(frontendDir));
+  }
+
+  // 404 for unknown API routes; otherwise fall back to the dashboard (SPA-ish).
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' || req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    if (hasFrontend) {
+      return res.sendFile(path.join(frontendDir, 'index.html'));
+    }
+    return res.status(404).json({ error: 'Not found', hint: 'Frontend not bundled; API is at /api.' });
+  });
 
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {

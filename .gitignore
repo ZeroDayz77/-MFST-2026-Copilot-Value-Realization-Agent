@@ -147,3 +147,6 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# OneDrive sync ghost files
+*.new

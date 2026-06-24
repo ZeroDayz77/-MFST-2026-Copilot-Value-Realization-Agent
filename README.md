@@ -13,7 +13,8 @@ This started as a Microsoft 365 **Declarative Agent (DA)**. It has pivoted to a
 ## Repository layout
 | Folder | Role |
 |--------|------|
-| **`backend/`** | **The middle layer / engine (start here).** Node/Express service: lead CRUD, AI generate, per‑lead model ranking, and LLM enrichment (pitch, actions, outreach). See [`backend/README.md`](backend/README.md). |
+| **`backend/`** | **The middle layer / engine (start here).** Node/Express service: lead CRUD, AI generate, per‑lead model ranking, and LLM enrichment (pitch, actions, outreach). Also serves the frontend. See [`backend/README.md`](backend/README.md). |
+| **`frontend/`** | Static dashboard (vanilla ES modules + CSS, no build) served by the backend at `/`. Two pages: ranked‑leads dashboard + the prompt/file **Add Leads** intake. |
 | `Models/` | Python ML layer. Trains & serves ROI / waste / expansion models (`train_models.py`, `predict.py`, `score_batch.py`, `export_params.py`). |
 | `Value Realization Agent/` | The original M365 Declarative Agent (left intact; superseded by `backend/` as the entry point). |
 
@@ -22,8 +23,8 @@ This started as a Microsoft 365 **Declarative Agent (DA)**. It has pivoted to a
 # 1) ML params for the backend's JS scoring engine (one‑time)
 cd Models && python export_params.py && cd ..
 
-# 2) Backend (runs in mock mode with no LLM keys)
-cd backend && npm install && npm start    # http://localhost:3000/api/meta
+# 2) Backend (also serves the dashboard; runs in mock mode with no LLM keys)
+cd backend && npm install && npm start    # http://localhost:3000  (dashboard + /api)
 ```
 
 ## How it works
@@ -33,5 +34,7 @@ cd backend && npm install && npm start    # http://localhost:3000/api/meta
 2. An **LLM API** (Azure OpenAI by default) turns those numbers into a per‑lead
    **sales playbook** + **outreach email**. No keys → deterministic, numbers‑grounded
    fallback so demos always work.
+3. The **dashboard** (`frontend/`, served at `/`) is a thin renderer — it adds and
+   lists leads and displays the model scores + LLM playbook; it never invents data.
 
 See [`backend/README.md`](backend/README.md) for the full API and configuration.
