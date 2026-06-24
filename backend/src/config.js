@@ -35,8 +35,20 @@ function firstExisting(paths) {
 
 const modelsDir = resolveMaybe(process.env.MODELS_DIR, DEFAULT_MODELS_DIR);
 
+// Azure OpenAI resource base. Foundry/AI Studio often hands out an endpoint with
+// a "/openai/v1" (or trailing "/openai") suffix; strip it so we can build the
+// classic data-plane URL (/openai/deployments/{deployment}/chat/completions).
+function normalizeAzureEndpoint(raw) {
+  return (raw || '')
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/openai\/v1$/i, '')
+    .replace(/\/openai$/i, '')
+    .replace(/\/+$/, '');
+}
+
 const azure = {
-  endpoint: (process.env.AZURE_OPENAI_ENDPOINT || '').replace(/\/+$/, ''),
+  endpoint: normalizeAzureEndpoint(process.env.AZURE_OPENAI_ENDPOINT),
   apiKey: process.env.AZURE_OPENAI_API_KEY || '',
   deployment: process.env.AZURE_OPENAI_DEPLOYMENT || '',
   apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-08-01-preview',
@@ -102,6 +114,9 @@ export const config = {
     openai,
     timeoutMs: num(process.env.LLM_TIMEOUT_MS, 30000),
     maxTokens: num(process.env.LLM_MAX_TOKENS, 1400),
+    // Reasoning models (GPT-5/o-series) spend hidden tokens before output; add
+    // this headroom on top of the requested output budget so content isn't empty.
+    reasoningHeadroom: num(process.env.LLM_REASONING_HEADROOM, 4000),
     temperature: num(process.env.LLM_TEMPERATURE, 0.4),
   },
 };
