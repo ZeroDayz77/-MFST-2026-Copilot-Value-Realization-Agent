@@ -28,6 +28,15 @@ RULES
 - Tone: confident, consultative, business value first. No fluff, no hype.
 - The outreach email must be tailored, <= 160 words, with a clear single call to action.
 
+DATA PROVENANCE (critical — do NOT fabricate):
+- The metrics are user/CRM-provided inputs and are UNVERIFIED. Do NOT claim they are
+  confirmed, and do NOT invent URLs, citations, links, or external facts.
+- In "sources", map the key figures to a REAL way a rep could verify them. Allowed
+  verification systems ONLY: Microsoft 365 Admin Center (Copilot usage reports),
+  Microsoft Viva Insights, the Copilot Adoption/Dashboard, the customer's own
+  procurement/licensing records, or a direct confirmation with the customer.
+- Never output a verification value that is a made-up URL or a specific web page.
+
 Return ONLY a JSON object (no markdown, no prose) with EXACTLY this shape:
 {
   "headline": "one-line account summary",
@@ -38,6 +47,10 @@ Return ONLY a JSON object (no markdown, no prose) with EXACTLY this shape:
   "value_drivers": ["what is creating or limiting value"],
   "risks": ["adoption gaps, wasted seats, or other risks"],
   "recommended_actions": ["concrete next steps to acquire/expand this account"],
+  "data_confidence": "Unverified — based on provided inputs",
+  "sources": [
+    { "claim": "the figure/claim", "basis": "where it came from (e.g. Provided CRM input — unverified)", "verification": "a REAL system to confirm it" }
+  ],
   "outreach": { "subject": "email subject", "body": "email body" }
 }`;
 }

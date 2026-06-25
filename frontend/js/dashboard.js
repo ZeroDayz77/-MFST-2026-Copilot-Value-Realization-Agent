@@ -79,7 +79,7 @@ function renderLeadTable() {
     return `
       <tr class="lead-row" data-id="${esc(lead.id)}">
         <td class="mono">${s.rank ?? '—'}</td>
-        <td><strong>${esc(lead.company_name || 'Untitled')}</strong></td>
+        <td><strong>${esc(lead.company_name || 'Untitled')}</strong>${lead.automation?.autopilot ? ' <span class="ap-marker" title="Autopilot enabled">🤖</span>' : ''}</td>
         <td><span class="priority-chip ${priorityClass(s.priority)}">${esc(s.priority || 'Unknown')}</span></td>
         <td class="mono">${score}</td>
         <td class="mono">${roi}</td>
@@ -239,6 +239,21 @@ function initToolbar() {
       try { await refresh(); toast('Refreshed', 'success'); }
       catch (e) { toast(e.message, 'error'); }
       finally { restore(); }
+    });
+  }
+  const apBtn = $('autopilotBtn');
+  if (apBtn) {
+    apBtn.addEventListener('click', async () => {
+      const restore = busy(apBtn, 'AI working…');
+      try {
+        const res = await api.runAutopilotAll();
+        await refresh();
+        toast(res.ran ? `Autopilot ran on ${res.ran} lead(s)` : 'No autopilot-enabled leads. Enable Autopilot on a lead first.', res.ran ? 'success' : 'info');
+      } catch (e) {
+        toast(`Autopilot failed: ${e.message}`, 'error');
+      } finally {
+        restore();
+      }
     });
   }
 }

@@ -51,6 +51,9 @@ export const api = {
 
   analyze: (id) => request('POST', `/leads/${id}/analyze`),
   outreach: (id, opts = {}) => request('POST', `/leads/${id}/outreach`, opts),
+  autopilot: (id) => request('POST', `/leads/${id}/autopilot`),
+  setAutomation: (id, autopilot) => request('POST', `/leads/${id}/automation`, { autopilot }),
+  runAutopilotAll: () => request('POST', '/leads/autopilot/run'),
 
   patchLead: (id, patch, { enrich = false } = {}) =>
     request('PATCH', `/leads/${id}?enrich=${enrich}`, patch),

@@ -13,6 +13,20 @@ export const PIPELINE_STAGES = [
   'Lost',
 ];
 
+// Terminal stages autopilot must never auto-assign (a human closes deals).
+export const TERMINAL_STAGES = ['Won', 'Lost'];
+
+export const ACTIVITY_TYPES = [
+  'created',
+  'scored',
+  'analyzed',
+  'outreach_drafted',
+  'stage_changed',
+  'autopilot_run',
+  'automation_changed',
+  'note',
+];
+
 export const PRIORITIES = ['Hot', 'Warm', 'Cool', 'Cold'];
 
 export const REQUIRED_METRICS = [
@@ -244,12 +258,13 @@ function cleanContact(contact = {}) {
 export function newLead(partial = {}, { product } = {}) {
   const now = new Date().toISOString();
   const { metrics } = normalizeMetrics(partial.metrics || partial);
+  const stage = cleanStage(partial.stage);
   return {
     id: partial.id || randomUUID(),
     created_at: now,
     updated_at: now,
     source: partial.source || 'manual',
-    stage: cleanStage(partial.stage),
+    stage,
     product: partial.product || product || 'Microsoft 365 Copilot',
     company_name: partial.company_name || partial.company || 'Untitled Account',
     industry: partial.industry || '',
@@ -260,9 +275,61 @@ export function newLead(partial = {}, { product } = {}) {
     metrics,
     scoring: null,
     enrichment: null,
+    // Lifecycle + automation
+    lifecycle: {
+      stage,
+      entered_stage_at: now,
+      next_action: null,
+      next_action_reason: null,
+    },
+    automation: {
+      autopilot: Boolean(partial.automation?.autopilot),
+      last_run_at: null,
+    },
+    activities: [],
     notes: partial.notes || '',
     tags: Array.isArray(partial.tags) ? partial.tags : [],
   };
+}
+
+// Append a timeline activity (newest entries are read first by the UI). Capped to
+// avoid unbounded growth in the JSON store.
+export function addActivity(lead, { type, summary, actor = 'system', stage_from, stage_to } = {}) {
+  if (!Array.isArray(lead.activities)) lead.activities = [];
+  lead.activities.push({
+    id: randomUUID(),
+    at: new Date().toISOString(),
+    actor,
+    type,
+    summary: String(summary || ''),
+    ...(stage_from ? { stage_from } : {}),
+    ...(stage_to ? { stage_to } : {}),
+  });
+  if (lead.activities.length > 100) {
+    lead.activities = lead.activities.slice(-100);
+  }
+  return lead;
+}
+
+// Change a lead's stage, recording the transition on the timeline + lifecycle.
+// Returns true if the stage actually changed.
+export function setStage(lead, stage, actor = 'user') {
+  const next = cleanStage(stage);
+  const prev = lead.stage;
+  if (next === prev) return false;
+  lead.stage = next;
+  lead.lifecycle = lead.lifecycle || {};
+  lead.lifecycle.stage = next;
+  lead.lifecycle.entered_stage_at = new Date().toISOString();
+  addActivity(lead, {
+    type: 'stage_changed',
+    actor,
+    summary: `Stage moved ${prev} → ${next}`,
+    stage_from: prev,
+    stage_to: next,
+  });
+  lead.updated_at = new Date().toISOString();
+  return true;
 }
 
 function toNumberOrNull(value) {
@@ -273,8 +340,8 @@ function toNumberOrNull(value) {
 // Apply a partial update to an existing lead. Re-normalizes metrics if provided.
 export function applyLeadPatch(lead, patch = {}) {
   const updated = { ...lead };
+  // Stage is handled separately (via setStage) so transitions get logged.
   const editableScalars = [
-    'stage',
     'product',
     'company_name',
     'industry',
@@ -285,7 +352,6 @@ export function applyLeadPatch(lead, patch = {}) {
   for (const key of editableScalars) {
     if (patch[key] !== undefined) updated[key] = patch[key];
   }
-  if (patch.stage !== undefined) updated.stage = cleanStage(patch.stage);
   if (patch.contact) updated.contact = cleanContact({ ...lead.contact, ...patch.contact });
   if (Array.isArray(patch.tags)) updated.tags = patch.tags;
 
