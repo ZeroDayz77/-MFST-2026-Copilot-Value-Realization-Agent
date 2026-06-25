@@ -25,10 +25,12 @@
   </nav>
   <div class="header-right" style="display:flex;align-items:center;gap:12px;">
     <button id="autopilotBtn" class="btn btn-sm btn-accent">🤖 Run autopilot</button>
+    <button id="exportBtn" class="btn btn-sm btn-ghost">⤓ Export CSV</button>
     <button id="rerankBtn" class="btn btn-sm btn-ghost">↕ Re-rank</button>
     <button id="refreshBtn" class="btn btn-sm btn-ghost">⟳ Refresh</button>
     <span class="badge badge-live">● Live Data</span>
     <span id="portfolioHeaderMeta" style="font-size:12px;color:var(--text-secondary);">Loading…</span>
+    <button id="helpBtn" class="help-btn" title="How to use Value IQ" aria-label="Help">?</button>
   </div>
 </header>
 
@@ -128,5 +130,6 @@
 </footer>
 
 <script type="module" src="js/dashboard.js"></script>
+<script type="module" src="js/onboarding.js"></script>
 </body>
 </html>

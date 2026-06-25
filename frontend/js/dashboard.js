@@ -7,6 +7,7 @@ import { store } from './store.js';
 import { renderCharts, palette } from './charts.js';
 import { openLeadDrawer } from './leadDetail.js';
 import { toast, busy } from './toast.js';
+import { downloadCsv } from './exporter.js';
 import {
   fmtUsd, fmtInt, fmtPct, n, esc, roiClass, priorityClass, adoptionPct,
 } from './format.js';
@@ -257,6 +258,27 @@ function initToolbar() {
       }
     });
   }
+  const exportBtn = $('exportBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      const rows = sortedLeads();
+      if (!rows.length) {
+        toast('No leads to export', 'info');
+        return;
+      }
+      downloadCsv(rows);
+      toast(`Exported ${rows.length} lead(s) to CSV`, 'success');
+    });
+  }
+}
+
+// Deep-link: open a lead's drawer when the URL hash is #lead=<id>. Also handy for
+// sharing a direct link to a lead.
+function openFromHash() {
+  const m = (location.hash || '').match(/lead=([^&]+)/);
+  if (m && store.getLead(decodeURIComponent(m[1]))) {
+    openLeadDrawer(decodeURIComponent(m[1]), { onChange: refresh });
+  }
 }
 
 async function bootstrap() {
@@ -265,6 +287,8 @@ async function bootstrap() {
   try {
     await store.load();
     renderAll();
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
   } catch (err) {
     console.error('Dashboard load failed:', err);
     loadError(err.message || 'Unable to load API data');
