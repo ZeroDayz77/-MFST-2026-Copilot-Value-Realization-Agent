@@ -24,11 +24,15 @@ const API_INFO = {
     'POST   /api/leads/intake',
     'POST   /api/leads/import',
     'POST   /api/leads/rank',
+    'POST   /api/leads/autopilot/run',
     'GET    /api/leads/:id',
     'PATCH  /api/leads/:id',
     'DELETE /api/leads/:id',
     'POST   /api/leads/:id/analyze',
     'POST   /api/leads/:id/outreach',
+    'POST   /api/leads/:id/send',
+    'POST   /api/leads/:id/autopilot',
+    'POST   /api/leads/:id/automation',
   ],
 };
 

@@ -79,7 +79,7 @@ function renderLeadTable() {
     return `
       <tr class="lead-row" data-id="${esc(lead.id)}">
         <td class="mono">${s.rank ?? '—'}</td>
-        <td><strong>${esc(lead.company_name || 'Untitled')}</strong></td>
+        <td><strong>${esc(lead.company_name || 'Untitled')}</strong>${lead.automation?.autopilot ? ' <span class="ap-marker" title="Autopilot enabled">🤖</span>' : ''}</td>
         <td><span class="priority-chip ${priorityClass(s.priority)}">${esc(s.priority || 'Unknown')}</span></td>
         <td class="mono">${score}</td>
         <td class="mono">${roi}</td>
@@ -163,12 +163,12 @@ function renderCompanyCards(companies) {
         </div>
         <div class="metric-row"><span class="metric-key">Licensed Users</span><span class="metric-val">${fmtInt(c.licensed)}</span></div>
         <div class="metric-row"><span class="metric-key">Active Users</span><span class="metric-val">${fmtInt(c.active)}</span></div>
-        <div class="metric-row"><span class="metric-key">Net Value</span><span class="metric-val" style="color:var(--accent4)">${fmtUsd(c.net)}</span></div>
+        <div class="metric-row"><span class="metric-key">Net Value</span><span class="metric-val" style="color:var(--success)">${fmtUsd(c.net)}</span></div>
         <div class="metric-row"><span class="metric-key">Monthly Spend</span><span class="metric-val">${fmtUsd(c.spend)}</span></div>
         <div class="metric-row"><span class="metric-key">Waste Cost</span><span class="metric-val" style="color:var(--danger)">${fmtUsd(c.waste)}</span></div>
         <div class="adoption-bar-wrap">
           <div class="adoption-label"><span>Adoption Rate</span><span>${fmtPct(c.adoptionRate * 100, 1)}</span></div>
-          <div class="adoption-track"><div class="adoption-fill" style="width:${Math.min(c.adoptionRate * 100, 100)}%;background:linear-gradient(90deg,${color},var(--accent2))"></div></div>
+          <div class="adoption-track"><div class="adoption-fill" style="width:${Math.min(c.adoptionRate * 100, 100)}%"></div></div>
         </div>
         <div class="kpi-meta" style="margin-top:8px">${fmtInt(idle)} idle seats</div>
       </div>`;
@@ -184,8 +184,9 @@ function renderMeta(totals, companyCount) {
   const meta = store.meta || {};
   const llm = meta.llm || {};
   const provider = llm.provider === 'mock' ? 'mock (no LLM key)' : `${llm.provider} · ${llm.model || ''}`;
+  const mailMode = meta.mail?.live ? `mail: live (${meta.mail.provider})` : 'mail: mock (send gate off)';
   setText('portfolioHeaderMeta',
-    `${store.leads.length} leads · ${companyCount} companies · AI: ${provider} · scoring: ${meta.scoring?.engine || '—'}`);
+    `${store.leads.length} leads · ${companyCount} companies · AI: ${provider} · scoring: ${meta.scoring?.engine || '—'} · ${mailMode}`);
 }
 
 // ── Orchestration ────────────────────────────────────────────────────────────
@@ -239,6 +240,21 @@ function initToolbar() {
       try { await refresh(); toast('Refreshed', 'success'); }
       catch (e) { toast(e.message, 'error'); }
       finally { restore(); }
+    });
+  }
+  const apBtn = $('autopilotBtn');
+  if (apBtn) {
+    apBtn.addEventListener('click', async () => {
+      const restore = busy(apBtn, 'AI working…');
+      try {
+        const res = await api.runAutopilotAll();
+        await refresh();
+        toast(res.ran ? `Autopilot ran on ${res.ran} lead(s)` : 'No autopilot-enabled leads. Enable Autopilot on a lead first.', res.ran ? 'success' : 'info');
+      } catch (e) {
+        toast(`Autopilot failed: ${e.message}`, 'error');
+      } finally {
+        restore();
+      }
     });
   }
 }

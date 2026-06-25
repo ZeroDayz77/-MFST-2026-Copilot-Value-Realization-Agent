@@ -3,9 +3,10 @@
 
 import { Router } from 'express';
 import config from '../config.js';
-import { PIPELINE_STAGES, PRIORITIES, REQUIRED_METRICS } from '../domain/lead.js';
+import { PIPELINE_STAGES, PRIORITIES, REQUIRED_METRICS, AUTONOMY_LEVELS } from '../domain/lead.js';
 import { scoringStatus } from '../services/scoringService.js';
 import { llm } from '../services/llmClient.js';
+import { mail } from '../services/mailService.js';
 
 export function makeMetaRoutes({ store }) {
   const router = Router();
@@ -20,6 +21,7 @@ export function makeMetaRoutes({ store }) {
       pipeline_stages: PIPELINE_STAGES,
       priorities: PRIORITIES,
       required_metrics: REQUIRED_METRICS,
+      autonomy_levels: AUTONOMY_LEVELS,
       lead_score: {
         weights: config.scoring.weights,
         size_ref_usd: config.scoring.sizeRefUsd,
@@ -27,6 +29,7 @@ export function makeMetaRoutes({ store }) {
       },
       scoring: await scoringStatus(),
       llm: llm.status(),
+      mail: mail.status(),
       lead_count: store.all().length,
     });
   });

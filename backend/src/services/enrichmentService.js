@@ -29,6 +29,31 @@ function asArray(v) {
   return [String(v)];
 }
 
+// Strip anything that looks like a fabricated URL/link so the model can't sneak in
+// invented citations — we only keep named systems / plain-text verification steps.
+function sanitizeVerification(text) {
+  const s = String(text || '').trim();
+  if (/https?:\/\/|www\.|\.com|\.net|\.org|\.io\b/i.test(s)) {
+    return 'Confirm via Microsoft 365 Admin Center (Copilot usage report)';
+  }
+  return s;
+}
+
+function normalizeSources(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const claim = String(item.claim || '').trim();
+      const basis = String(item.basis || 'Provided CRM input — unverified').trim();
+      const verification = sanitizeVerification(item.verification);
+      if (!claim && !verification) return null;
+      return { claim, basis, verification };
+    })
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
 // Coerce whatever the LLM returned into our strict enrichment shape.
 function normalizeEnrichment(raw, model) {
   const outreach = raw.outreach || {};
@@ -41,13 +66,41 @@ function normalizeEnrichment(raw, model) {
     value_drivers: asArray(raw.value_drivers),
     risks: asArray(raw.risks),
     recommended_actions: asArray(raw.recommended_actions || raw.actions),
+    data_confidence: String(raw.data_confidence || 'Unverified — based on provided inputs').trim(),
+    sources: normalizeSources(raw.sources),
     outreach: {
       subject: String(outreach.subject || '').trim(),
       body: String(outreach.body || '').trim(),
+      status: 'draft',
     },
     model,
     generated_at: new Date().toISOString(),
   };
+}
+
+// Deterministic, honest provenance for the fallback path: states the data is
+// user-provided/unverified and maps each key metric to a REAL verification system.
+function fallbackSources(lead) {
+  const m = lead.metrics || {};
+  const basis = 'Provided CRM input — unverified';
+  const sources = [
+    {
+      claim: `${Number(m.licensed_users || 0).toLocaleString('en-US')} Copilot licenses`,
+      basis,
+      verification: 'Microsoft 365 Admin Center → Billing → Licenses',
+    },
+    {
+      claim: `${Number(m.active_users || 0).toLocaleString('en-US')} active users (${pct((Number(m.adoption_rate) || 0) * 100, 0)} adoption)`,
+      basis,
+      verification: 'Microsoft 365 Admin Center → Reports → Copilot usage',
+    },
+    {
+      claim: `${Number(m.avg_hours_saved_per_user_month || 0)} hrs saved / user / month`,
+      basis: 'Assumption / benchmark — unverified',
+      verification: 'Microsoft Viva Insights, or confirm with the customer',
+    },
+  ];
+  return sources;
 }
 
 function fallbackEnrichment(lead) {
@@ -116,6 +169,8 @@ function fallbackEnrichment(lead) {
       value_drivers,
       risks,
       recommended_actions,
+      data_confidence: 'Unverified — based on provided inputs',
+      sources: fallbackSources(lead),
       outreach,
     },
     'mock-fallback',

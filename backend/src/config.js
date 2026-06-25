@@ -82,6 +82,49 @@ if (process.env.LEAD_SCORE_WEIGHTS) {
   }
 }
 
+// --- Mail / outreach sending -------------------------------------------------
+// HARD SAFETY GATE: real email is NEVER sent unless MAIL_SEND_ENABLED=true AND a
+// real provider (smtp|graph) is fully configured. Default is a mock outbox that
+// records "sends" without anything leaving the box.
+function boolEnv(value, fallback = false) {
+  if (value === undefined || value === null || value === '') return fallback;
+  return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
+
+let mailProvider = (process.env.MAIL_PROVIDER || 'mock').toLowerCase();
+if (!['mock', 'smtp', 'graph'].includes(mailProvider)) mailProvider = 'mock';
+
+const smtp = {
+  host: process.env.SMTP_HOST || '',
+  port: num(process.env.SMTP_PORT, 587),
+  user: process.env.SMTP_USER || '',
+  pass: process.env.SMTP_PASS || '',
+  secure: boolEnv(process.env.SMTP_SECURE, false),
+};
+
+const graphMail = {
+  tenantId: process.env.GRAPH_TENANT_ID || '',
+  clientId: process.env.GRAPH_CLIENT_ID || '',
+  clientSecret: process.env.GRAPH_CLIENT_SECRET || '',
+  sender: process.env.GRAPH_SENDER || '', // the mailbox to send as (UPN)
+};
+
+let mailProviderConfigured = true;
+if (mailProvider === 'smtp') mailProviderConfigured = Boolean(smtp.host && smtp.user && smtp.pass);
+else if (mailProvider === 'graph') {
+  mailProviderConfigured = Boolean(graphMail.tenantId && graphMail.clientId && graphMail.clientSecret && graphMail.sender);
+}
+
+// The gate the user explicitly asked for. Off by default.
+const mailSendEnabled = boolEnv(process.env.MAIL_SEND_ENABLED, false);
+// "live" means a real provider is configured AND the gate is on. Otherwise mock.
+const mailLive = mailProvider !== 'mock' && mailProviderConfigured && mailSendEnabled;
+const effectiveMailProvider = mailLive ? mailProvider : 'mock';
+
+// Default autonomy for new leads: manual | approval | auto.
+let defaultAutonomy = (process.env.DEFAULT_AUTONOMY || 'manual').toLowerCase();
+if (!['manual', 'approval', 'auto'].includes(defaultAutonomy)) defaultAutonomy = 'manual';
+
 export const config = {
   backendRoot: BACKEND_ROOT,
   repoRoot: REPO_ROOT,
@@ -127,6 +170,20 @@ export const config = {
     // this headroom on top of the requested output budget so content isn't empty.
     reasoningHeadroom: num(process.env.LLM_REASONING_HEADROOM, 4000),
     temperature: num(process.env.LLM_TEMPERATURE, 0.4),
+  },
+  mail: {
+    // effective provider after the safety gate (mock unless live).
+    provider: effectiveMailProvider,
+    requestedProvider: mailProvider,
+    // The explicit on/off gate. When false, NOTHING is really emailed.
+    sendEnabled: mailSendEnabled,
+    providerConfigured: mailProviderConfigured,
+    live: mailLive,
+    fromAddress: process.env.MAIL_FROM || graphMail.sender || smtp.user || 'value-iq@example.com',
+    defaultAutonomy,
+    smtp,
+    graph: graphMail,
+    timeoutMs: num(process.env.MAIL_TIMEOUT_MS, 20000),
   },
 };
 

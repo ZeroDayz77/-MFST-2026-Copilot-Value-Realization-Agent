@@ -28,6 +28,15 @@ RULES
 - Tone: confident, consultative, business value first. No fluff, no hype.
 - The outreach email must be tailored, <= 160 words, with a clear single call to action.
 
+DATA PROVENANCE (critical — do NOT fabricate):
+- The metrics are user/CRM-provided inputs and are UNVERIFIED. Do NOT claim they are
+  confirmed, and do NOT invent URLs, citations, links, or external facts.
+- In "sources", map the key figures to a REAL way a rep could verify them. Allowed
+  verification systems ONLY: Microsoft 365 Admin Center (Copilot usage reports),
+  Microsoft Viva Insights, the Copilot Adoption/Dashboard, the customer's own
+  procurement/licensing records, or a direct confirmation with the customer.
+- Never output a verification value that is a made-up URL or a specific web page.
+
 Return ONLY a JSON object (no markdown, no prose) with EXACTLY this shape:
 {
   "headline": "one-line account summary",
@@ -38,6 +47,10 @@ Return ONLY a JSON object (no markdown, no prose) with EXACTLY this shape:
   "value_drivers": ["what is creating or limiting value"],
   "risks": ["adoption gaps, wasted seats, or other risks"],
   "recommended_actions": ["concrete next steps to acquire/expand this account"],
+  "data_confidence": "Unverified — based on provided inputs",
+  "sources": [
+    { "claim": "the figure/claim", "basis": "where it came from (e.g. Provided CRM input — unverified)", "verification": "a REAL system to confirm it" }
+  ],
   "outreach": { "subject": "email subject", "body": "email body" }
 }`;
 }
@@ -92,6 +105,42 @@ METRICS: ${JSON.stringify(lead.metrics)}
 SCORES: ${JSON.stringify(lead.scoring)}
 
 Write the outreach now as JSON { "subject": "...", "body": "..." }.`;
+}
+
+export function decisionSystemPrompt(product) {
+  return `You are the autonomous decision-maker for a ${product} sales CRM. Given ONE
+lead's current state (scores, stage, contact, what has already happened), decide the
+SINGLE best next action from this exact set:
+
+- "send_email"     — the outreach email should go out now (first contact / follow-up).
+- "draft_email"    — prepare an email but a human should review before sending.
+- "advance_stage"  — move the lead forward in the pipeline (do not close Won/Lost).
+- "wait_nurture"   — no action yet; revisit later.
+- "escalate_human" — needs a person (weak/unclear data, at-risk, or high-stakes).
+
+GUIDANCE
+- Prefer "send_email" when there is a contact email, the lead has been analyzed, it is
+  early in the pipeline (New/Qualified/Contacted), and the model signal is healthy
+  (decent ROI / expansion-ready / recoverable waste).
+- Prefer "escalate_human" when data is weak/at-risk or the situation is ambiguous.
+- Use "advance_stage" when work for the current stage is clearly done.
+- Never fabricate facts. Base the decision only on the provided state.
+
+Return ONLY a JSON object: { "action": "<one of the set>", "reason": "<one sentence>", "confidence": <0..1> }`;
+}
+
+export function decisionUserPrompt(lead) {
+  const state = {
+    company_name: lead.company_name,
+    stage: lead.stage,
+    contact_email: lead.contact?.email || null,
+    has_enrichment: Boolean(lead.enrichment && (lead.enrichment.sales_pitch || lead.enrichment.summary)),
+    has_outreach_draft: Boolean(lead.enrichment?.outreach?.body),
+    outreach_status: lead.enrichment?.outreach?.status || null,
+    scoring: lead.scoring,
+    recent_activity: (lead.activities || []).slice(-6).map((a) => `${a.type}: ${a.summary}`),
+  };
+  return `LEAD STATE:\n${JSON.stringify(state, null, 2)}\n\nDecide the single best next action as JSON now.`;
 }
 
 export function generationSystemPrompt(product) {

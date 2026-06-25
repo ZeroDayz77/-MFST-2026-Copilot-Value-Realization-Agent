@@ -126,6 +126,15 @@ export function makeLeadRoutes({ store, leadService }) {
     }),
   );
 
+  // Run autopilot across all autopilot-enabled leads.
+  router.post(
+    '/autopilot/run',
+    asyncHandler(async (req, res) => {
+      const leads = await leadService.runAutopilotAll();
+      res.json({ ran: leads.length, leads });
+    }),
+  );
+
   // Single lead.
   router.get(
     '/:id',
@@ -175,6 +184,40 @@ export function makeLeadRoutes({ store, leadService }) {
       const outreach = await leadService.outreachForLead(req.params.id, { tone, channel, goal });
       if (!outreach) return res.status(404).json({ error: 'Lead not found' });
       return res.json({ outreach });
+    }),
+  );
+
+  // Run the AI "next best action" for one lead (analyze → draft → advance stage).
+  router.post(
+    '/:id/autopilot',
+    asyncHandler(async (req, res) => {
+      const lead = await leadService.runAutopilot(req.params.id);
+      if (!lead) return res.status(404).json({ error: 'Lead not found' });
+      return res.json({ lead });
+    }),
+  );
+
+  // Toggle per-lead automation (autopilot opt-in + autonomy level).
+  router.post(
+    '/:id/automation',
+    asyncHandler(async (req, res) => {
+      const lead = await leadService.setAutomation(req.params.id, {
+        autopilot: req.body?.autopilot,
+        autonomy: req.body?.autonomy,
+      });
+      if (!lead) return res.status(404).json({ error: 'Lead not found' });
+      return res.json({ lead });
+    }),
+  );
+
+  // Send (or approve+send) the lead's outreach email. Honors the hard mail gate —
+  // runs as a mock send unless MAIL_SEND_ENABLED + a provider are configured.
+  router.post(
+    '/:id/send',
+    asyncHandler(async (req, res) => {
+      const result = await leadService.sendOutreach(req.params.id, {});
+      if (!result) return res.status(404).json({ error: 'Lead not found' });
+      return res.json(result);
     }),
   );
 
