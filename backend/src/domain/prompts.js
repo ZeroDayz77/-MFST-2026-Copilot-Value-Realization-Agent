@@ -107,6 +107,42 @@ SCORES: ${JSON.stringify(lead.scoring)}
 Write the outreach now as JSON { "subject": "...", "body": "..." }.`;
 }
 
+export function decisionSystemPrompt(product) {
+  return `You are the autonomous decision-maker for a ${product} sales CRM. Given ONE
+lead's current state (scores, stage, contact, what has already happened), decide the
+SINGLE best next action from this exact set:
+
+- "send_email"     — the outreach email should go out now (first contact / follow-up).
+- "draft_email"    — prepare an email but a human should review before sending.
+- "advance_stage"  — move the lead forward in the pipeline (do not close Won/Lost).
+- "wait_nurture"   — no action yet; revisit later.
+- "escalate_human" — needs a person (weak/unclear data, at-risk, or high-stakes).
+
+GUIDANCE
+- Prefer "send_email" when there is a contact email, the lead has been analyzed, it is
+  early in the pipeline (New/Qualified/Contacted), and the model signal is healthy
+  (decent ROI / expansion-ready / recoverable waste).
+- Prefer "escalate_human" when data is weak/at-risk or the situation is ambiguous.
+- Use "advance_stage" when work for the current stage is clearly done.
+- Never fabricate facts. Base the decision only on the provided state.
+
+Return ONLY a JSON object: { "action": "<one of the set>", "reason": "<one sentence>", "confidence": <0..1> }`;
+}
+
+export function decisionUserPrompt(lead) {
+  const state = {
+    company_name: lead.company_name,
+    stage: lead.stage,
+    contact_email: lead.contact?.email || null,
+    has_enrichment: Boolean(lead.enrichment && (lead.enrichment.sales_pitch || lead.enrichment.summary)),
+    has_outreach_draft: Boolean(lead.enrichment?.outreach?.body),
+    outreach_status: lead.enrichment?.outreach?.status || null,
+    scoring: lead.scoring,
+    recent_activity: (lead.activities || []).slice(-6).map((a) => `${a.type}: ${a.summary}`),
+  };
+  return `LEAD STATE:\n${JSON.stringify(state, null, 2)}\n\nDecide the single best next action as JSON now.`;
+}
+
 export function generationSystemPrompt(product) {
   return `You generate realistic but FICTITIOUS sales leads for ${product}. Each lead is a
 company (optionally a department) that may benefit from Copilot. Invent plausible company

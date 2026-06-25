@@ -80,8 +80,27 @@ Base path `/api`.
 | POST | `/leads/intake` | **Combined prompt + file flow** (see below). `?enrich=true` |
 | POST | `/leads/import` | Bulk import `{ leads: [...] }` |
 | POST | `/leads/rank` | Recompute ranks across all leads |
+| POST | `/leads/autopilot/run` | Run AI autopilot across all autopilot‑enabled leads |
 | POST | `/leads/:id/analyze` | Force re‑score **+ LLM enrichment** |
-| POST | `/leads/:id/outreach` | Generate/refresh outreach `{ tone, channel, goal }` |
+| POST | `/leads/:id/outreach` | Generate/refresh an outreach **draft** `{ tone, channel, goal }` |
+| POST | `/leads/:id/send` | Send (or approve+send) the outreach — honors the mail gate |
+| POST | `/leads/:id/autopilot` | **AI next‑best‑action**: decide → draft/send/advance (per autonomy) |
+| POST | `/leads/:id/automation` | Set `{ autopilot, autonomy }` (autonomy: manual\|approval\|auto) |
+
+### AI email sending (agent loop)
+`/:id/autopilot` runs a **planner/executor** loop: the LLM **decides** the next action
+(`send_email`, `draft_email`, `advance_stage`, `wait_nurture`, `escalate_human`) and
+deterministic code **executes** it under the lead's **autonomy**:
+- **manual** — AI drafts, never sends.
+- **approval** — an AI "send" is **queued** for a human (`POST /:id/send` to approve).
+- **auto** — AI **sends** via the mail provider.
+
+> **HARD SAFETY GATE:** real email is sent only when `MAIL_SEND_ENABLED=true` **and** a
+> provider (`smtp`|`graph`) is configured. Otherwise everything runs in a **mock outbox**
+> — sends are recorded (`mock: true`) but nothing is delivered. `GET /api/meta` →
+> `mail.live` shows whether real sending is active. Providers: **SMTP** (e.g. SendGrid /
+> O365 app password) or **Microsoft Graph** `Mail.Send` (needs admin‑consented Entra app;
+> often blocked on student tenants → SMTP is the easy path). ACS is an easy future add.
 
 ### Required metrics
 `licensed_users`, `active_users`, `app_mix_score`, `avg_hours_saved_per_user_month`,

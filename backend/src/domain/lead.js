@@ -24,8 +24,17 @@ export const ACTIVITY_TYPES = [
   'stage_changed',
   'autopilot_run',
   'automation_changed',
+  'decision',
+  'email_sent',
+  'email_queued',
+  'email_failed',
   'note',
 ];
+
+export const AUTONOMY_LEVELS = ['manual', 'approval', 'auto'];
+
+// AI planner's allowed actions (the executor maps these to real operations).
+export const AI_ACTIONS = ['send_email', 'draft_email', 'advance_stage', 'wait_nurture', 'escalate_human'];
 
 export const PRIORITIES = ['Hot', 'Warm', 'Cool', 'Cold'];
 
@@ -255,10 +264,13 @@ function cleanContact(contact = {}) {
 
 // Build a fresh, fully-shaped lead from a partial payload. Metrics are normalized
 // but scoring/enrichment are attached later by their services.
-export function newLead(partial = {}, { product } = {}) {
+export function newLead(partial = {}, { product, defaultAutonomy = 'manual' } = {}) {
   const now = new Date().toISOString();
   const { metrics } = normalizeMetrics(partial.metrics || partial);
   const stage = cleanStage(partial.stage);
+  const autonomy = AUTONOMY_LEVELS.includes(partial.automation?.autonomy)
+    ? partial.automation.autonomy
+    : defaultAutonomy;
   return {
     id: partial.id || randomUUID(),
     created_at: now,
@@ -284,9 +296,11 @@ export function newLead(partial = {}, { product } = {}) {
     },
     automation: {
       autopilot: Boolean(partial.automation?.autopilot),
+      autonomy,
       last_run_at: null,
     },
     activities: [],
+    outbox: [],
     notes: partial.notes || '',
     tags: Array.isArray(partial.tags) ? partial.tags : [],
   };
@@ -309,6 +323,24 @@ export function addActivity(lead, { type, summary, actor = 'system', stage_from,
     lead.activities = lead.activities.slice(-100);
   }
   return lead;
+}
+
+// Record an email send/queue/failure in the lead's outbox history.
+export function addOutboxEntry(lead, entry = {}) {
+  if (!Array.isArray(lead.outbox)) lead.outbox = [];
+  const record = {
+    id: randomUUID(),
+    at: new Date().toISOString(),
+    to: entry.to || '',
+    subject: entry.subject || '',
+    status: entry.status || 'queued', // queued | sent | failed
+    provider: entry.provider || 'mock',
+    mock: Boolean(entry.mock),
+    ...(entry.error ? { error: String(entry.error) } : {}),
+  };
+  lead.outbox.push(record);
+  if (lead.outbox.length > 50) lead.outbox = lead.outbox.slice(-50);
+  return record;
 }
 
 // Change a lead's stage, recording the transition on the timeline + lifecycle.

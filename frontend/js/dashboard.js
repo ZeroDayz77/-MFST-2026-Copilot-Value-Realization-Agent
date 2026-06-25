@@ -184,8 +184,9 @@ function renderMeta(totals, companyCount) {
   const meta = store.meta || {};
   const llm = meta.llm || {};
   const provider = llm.provider === 'mock' ? 'mock (no LLM key)' : `${llm.provider} · ${llm.model || ''}`;
+  const mailMode = meta.mail?.live ? `mail: live (${meta.mail.provider})` : 'mail: mock (send gate off)';
   setText('portfolioHeaderMeta',
-    `${store.leads.length} leads · ${companyCount} companies · AI: ${provider} · scoring: ${meta.scoring?.engine || '—'}`);
+    `${store.leads.length} leads · ${companyCount} companies · AI: ${provider} · scoring: ${meta.scoring?.engine || '—'} · ${mailMode}`);
 }
 
 // ── Orchestration ────────────────────────────────────────────────────────────

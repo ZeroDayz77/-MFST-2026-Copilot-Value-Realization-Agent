@@ -265,24 +265,26 @@
 
 .loading-row td { color: var(--text-tertiary); font-style: italic; }
 
-/* ── Outreach card (draft) ── */
-.draft-badge {
+/* ── Outreach card (status) ── */
+.status-badge {
   display: inline-block;
   margin-left: 8px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  color: var(--warning);
-  background: var(--warning-soft);
-  border: 1px solid rgba(210, 153, 34, 0.35);
   border-radius: var(--radius-pill);
   padding: 2px 9px;
   vertical-align: middle;
 }
+.st-draft { color: var(--text-tertiary); background: rgba(139, 148, 166, 0.16); border: 1px solid var(--border-strong); }
+.st-queued { color: var(--warning); background: var(--warning-soft); border: 1px solid rgba(210, 153, 34, 0.35); }
+.st-sent { color: var(--success); background: var(--success-soft); border: 1px solid rgba(63, 185, 80, 0.35); }
+.st-failed { color: var(--danger); background: var(--danger-soft); border: 1px solid rgba(248, 81, 73, 0.35); }
 .outreach-foot {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 10px;
 }

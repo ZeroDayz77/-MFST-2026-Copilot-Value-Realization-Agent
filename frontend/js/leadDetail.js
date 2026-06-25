@@ -72,22 +72,37 @@ function scoresHtml(lead) {
 }
 
 // Outreach email — rendered whenever an email exists, INDEPENDENT of the rest of
-// the enrichment (fixes the "draft email shows nothing" bug). Marked draft/not-sent.
+// the enrichment (fixes the "draft email shows nothing" bug). Status-aware.
 function outreachHtml(lead) {
   const o = lead.enrichment?.outreach;
   if (!o || (!o.subject && !o.body)) return '';
+  const status = o.status || 'draft';
+  const mail = store.meta?.mail || {};
+  const badge = {
+    draft: { cls: 'st-draft', text: 'Draft' },
+    queued: { cls: 'st-queued', text: 'Queued for approval' },
+    sent: { cls: 'st-sent', text: o.delivery === 'mock' ? 'Sent (mock — not delivered)' : 'Sent' },
+    failed: { cls: 'st-failed', text: 'Send failed' },
+  }[status] || { cls: 'st-draft', text: status };
+
+  // Honest button label: when mail is mocked/off, say so.
+  const sendLabel = status === 'queued' ? 'Approve &amp; send' : 'Send';
+  const sendNote = mail.live ? '' : ' (mock)';
+
   return `
     <div class="menu-card" id="outreachCard" style="margin-top:12px;">
-      <h4>Outreach email <span class="draft-badge">Draft — not sent</span></h4>
+      <h4>Outreach email <span class="status-badge ${badge.cls}">${badge.text}</span></h4>
       <div class="outreach-box">
         <div class="outreach-subject">${esc(o.subject || '(no subject)')}</div>
         <div class="outreach-body">${escMultiline(o.body || '')}</div>
       </div>
       <div class="outreach-foot">
+        ${status !== 'sent' ? `<button class="btn btn-sm btn-primary" data-act="send">${sendLabel}${sendNote}</button>` : ''}
         <button class="btn btn-sm btn-ghost" data-act="copy-outreach">Copy</button>
-        <button class="btn btn-sm" data-act="outreach">Redraft</button>
+        <button class="btn btn-sm btn-ghost" data-act="outreach">Redraft</button>
         ${o.model ? `<span class="ai-source">Drafted by ${esc(o.model)}</span>` : ''}
       </div>
+      ${!mail.live ? '<div class="source-note">Email sending is in mock mode — nothing is delivered until the send gate is enabled.</div>' : ''}
     </div>`;
 }
 
@@ -120,6 +135,10 @@ const ACTIVITY_ICON = {
   stage_changed: '➜',
   autopilot_run: '🤖',
   automation_changed: '⚙',
+  decision: '🧠',
+  email_sent: '📨',
+  email_queued: '⏳',
+  email_failed: '⚠',
   note: '🗒',
 };
 
@@ -175,6 +194,16 @@ function stageSelect(lead, stages) {
   return `<select id="drawerStage" class="btn btn-sm" style="padding-right:8px;">${opts}</select>`;
 }
 
+function autonomySelect(lead) {
+  const levels = store.meta?.autonomy_levels || ['manual', 'approval', 'auto'];
+  const current = lead.automation?.autonomy || 'manual';
+  const labels = { manual: 'Manual', approval: 'Approval', auto: 'Auto-send' };
+  const opts = levels.map(
+    (l) => `<option value="${esc(l)}" ${l === current ? 'selected' : ''}>AI: ${esc(labels[l] || l)}</option>`,
+  ).join('');
+  return `<select id="drawerAutonomy" class="btn btn-sm" style="padding-right:8px;" title="How far the AI may act: draft only, queue for approval, or send automatically">${opts}</select>`;
+}
+
 function render(lead) {
   const body = overlay.querySelector('#drawerBody');
   const s = lead.scoring || {};
@@ -197,6 +226,7 @@ function render(lead) {
       <label class="autopilot-toggle" title="Let the AI run next-actions for this lead">
         <input type="checkbox" id="apToggle" ${autopilotOn ? 'checked' : ''}/> Autopilot
       </label>
+      ${autonomySelect(lead)}
       <button class="btn btn-danger btn-sm" data-act="delete">Delete</button>
     </div>
 
@@ -235,7 +265,9 @@ function render(lead) {
   const stageSel = body.querySelector('#drawerStage');
   if (stageSel) stageSel.addEventListener('change', () => handleStage(lead.id, stageSel.value));
   const apToggle = body.querySelector('#apToggle');
-  if (apToggle) apToggle.addEventListener('change', () => handleAutomation(lead.id, apToggle.checked));
+  if (apToggle) apToggle.addEventListener('change', () => handleAutomation(lead.id, { autopilot: apToggle.checked }));
+  const autSel = body.querySelector('#drawerAutonomy');
+  if (autSel) autSel.addEventListener('change', () => handleAutomation(lead.id, { autonomy: autSel.value }));
 }
 
 async function handleAction(act, id, btn) {
@@ -278,6 +310,29 @@ async function handleAction(act, id, btn) {
       toast(`Autopilot failed: ${e.message}`, 'error');
       restore();
     }
+  } else if (act === 'send') {
+    const lead0 = store.getLead(id);
+    const live = store.meta?.mail?.live;
+    const queued = lead0?.enrichment?.outreach?.status === 'queued';
+    const verb = queued ? 'Approve & send' : 'Send';
+    if (!confirm(live
+      ? `${verb} this email to ${lead0?.contact?.email || 'the contact'}? This will really be delivered.`
+      : `${verb} (mock mode — nothing is actually delivered). Continue?`)) return;
+    const restore = busy(btn, 'Sending…');
+    try {
+      const res = await api.sendOutreach(id);
+      if (res.lead) store.upsert(res.lead);
+      render(store.getLead(id));
+      onChangeCb();
+      if (res.ok) {
+        toast(res.result?.mock ? 'Email sent (mock — not delivered)' : 'Email sent', 'success');
+      } else {
+        toast(res.reason === 'no_contact_email' ? 'No contact email on file' : 'Send failed', 'error');
+      }
+    } catch (e) {
+      toast(`Send failed: ${e.message}`, 'error');
+      restore();
+    }
   } else if (act === 'copy-outreach') {
     const o = store.getLead(id)?.enrichment?.outreach;
     if (o) {
@@ -318,12 +373,14 @@ async function handleStage(id, stage) {
   }
 }
 
-async function handleAutomation(id, autopilot) {
+async function handleAutomation(id, opts) {
   try {
-    const { lead } = await api.setAutomation(id, autopilot);
+    const { lead } = await api.setAutomation(id, opts);
     store.upsert(lead);
+    render(store.getLead(id));
     onChangeCb();
-    toast(`Autopilot ${autopilot ? 'enabled' : 'disabled'}`, 'success');
+    if (opts.autonomy) toast(`AI autonomy → ${opts.autonomy}`, 'success');
+    else toast(`Autopilot ${opts.autopilot ? 'enabled' : 'disabled'}`, 'success');
   } catch (e) {
     toast(`Automation update failed: ${e.message}`, 'error');
   }
